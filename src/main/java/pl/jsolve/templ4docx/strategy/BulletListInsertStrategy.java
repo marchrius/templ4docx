@@ -8,6 +8,7 @@ import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTRPr;
 
 import pl.jsolve.templ4docx.cleaner.ParagraphCleaner;
 import pl.jsolve.templ4docx.insert.BulletListInsert;
+import pl.jsolve.templ4docx.insert.DocumentInsert;
 import pl.jsolve.templ4docx.insert.ImageInsert;
 import pl.jsolve.templ4docx.insert.Insert;
 import pl.jsolve.templ4docx.insert.ParagraphInsert;
@@ -15,6 +16,7 @@ import pl.jsolve.templ4docx.insert.TextInsert;
 import pl.jsolve.templ4docx.util.Key;
 import pl.jsolve.templ4docx.util.VariableType;
 import pl.jsolve.templ4docx.variable.BulletListVariable;
+import pl.jsolve.templ4docx.variable.DocumentVariable;
 import pl.jsolve.templ4docx.variable.ImageVariable;
 import pl.jsolve.templ4docx.variable.TextVariable;
 import pl.jsolve.templ4docx.variable.Variable;
@@ -83,6 +85,9 @@ public class BulletListInsertStrategy implements InsertStrategy {
         if (variableToInsert instanceof BulletListVariable) {
             return new BulletListInsert(new Key(key.getKey(), VariableType.BULLET_LIST), paragraph,
                     originalInsert.getCellParent(), originalInsert.getDocumentParent());
+        }
+        if(variableToInsert instanceof DocumentVariable) {
+        	return new DocumentInsert(new Key(key.getKey(), VariableType.DOCUMENT), paragraph);
         }
 
         return null;

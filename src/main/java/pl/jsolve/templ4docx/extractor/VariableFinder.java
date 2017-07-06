@@ -16,6 +16,7 @@ import pl.jsolve.sweetener.collection.Maps;
 import pl.jsolve.templ4docx.cleaner.ParagraphCleaner;
 import pl.jsolve.templ4docx.cleaner.TableRowCleaner;
 import pl.jsolve.templ4docx.insert.BulletListInsert;
+import pl.jsolve.templ4docx.insert.DocumentInsert;
 import pl.jsolve.templ4docx.insert.ImageInsert;
 import pl.jsolve.templ4docx.insert.Insert;
 import pl.jsolve.templ4docx.insert.TableCellInsert;
@@ -117,6 +118,9 @@ public class VariableFinder {
                         inserts.add(new TableCellInsert(key, cell));
                     }
                     break;
+                case DOCUMENT:
+                	inserts.add(new DocumentInsert(key, paragraph));
+                	break;
                 }
             }
         }

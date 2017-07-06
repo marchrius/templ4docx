@@ -19,17 +19,14 @@ import pl.jsolve.templ4docx.insert.TextInsert;
 import pl.jsolve.templ4docx.util.Key;
 import pl.jsolve.templ4docx.variable.TableVariable;
 import pl.jsolve.templ4docx.variable.Variable;
-import pl.jsolve.templ4docx.variable.Variables;
 
 public class TableInsertStrategy implements InsertStrategy {
 
-    private Variables variables;
     private InsertStrategyChooser insertStrategyChooser;
     private TableRowCleaner tableRowCleaner;
 
-    public TableInsertStrategy(Variables variables, InsertStrategyChooser insertStrategyChooser,
+    public TableInsertStrategy(InsertStrategyChooser insertStrategyChooser,
             TableRowCleaner tableRowCleaner) {
-        this.variables = variables;
         this.insertStrategyChooser = insertStrategyChooser;
         this.tableRowCleaner = tableRowCleaner;
     }
@@ -115,6 +112,8 @@ public class TableInsertStrategy implements InsertStrategy {
             return new ImageInsert(key, findParagraph(cell, key.getKey()));
         case BULLET_LIST:
             return new BulletListInsert(key, findParagraph(cell, key.getKey()), cell, null);
+		default:
+			break;
         }
         return null;
     }

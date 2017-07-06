@@ -1,9 +1,11 @@
 package pl.jsolve.templ4docx.core;
 
+import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.InputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.Serializable;
 import java.util.List;
@@ -151,5 +153,14 @@ public class Docx implements Serializable {
     public XWPFDocument getXWPFDocument() {
         return docx;
     }
-
+    
+    public byte[] getBytes(){
+    	ByteArrayOutputStream output = new ByteArrayOutputStream();
+    	try {
+			docx.write(output);
+			return output.toByteArray();
+		} catch (IOException e) {
+			throw new OpenDocxException(e.getMessage(), e.getCause());
+		}
+    }
 }

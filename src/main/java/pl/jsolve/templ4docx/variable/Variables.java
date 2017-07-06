@@ -13,12 +13,14 @@ public class Variables {
     private Map<String, ImageVariable> imageVariables;
     private List<TableVariable> tableVariables;
     private Map<String, BulletListVariable> bulletListVariables;
+    private Map<String, DocumentVariable> documentVariables;
 
     public Variables() {
         this.textVariables = Maps.newHashMap();
         this.imageVariables = Maps.newHashMap();
         this.tableVariables = Collections.newArrayList();
         this.bulletListVariables = Maps.newHashMap();
+        this.documentVariables = Maps.newHashMap();
     }
 
     public TextVariable addTextVariable(TextVariable textVariable) {
@@ -38,6 +40,10 @@ public class Variables {
         this.bulletListVariables.put(bulletListVariable.getKey(), bulletListVariable);
         return bulletListVariable;
     }
+    
+    public DocumentVariable addDocumentVariable(DocumentVariable documentVariable){
+    	return this.documentVariables.put(documentVariable.getKey(), documentVariable);
+    }
 
     public Map<String, TextVariable> getTextVariables() {
         return textVariables;
@@ -53,6 +59,10 @@ public class Variables {
 
     public Map<String, BulletListVariable> getBulletListVariables() {
         return bulletListVariables;
+    }
+    
+    public Map<String, DocumentVariable> getDocumentVariables(){
+    	return documentVariables;
     }
 
     public Variable getVariable(Key key) {
@@ -72,6 +82,8 @@ public class Variables {
             break;
         case BULLET_LIST:
             return bulletListVariables.get(key.getKey());
+        case DOCUMENT:
+        	return documentVariables.get(key.getKey());
         }
         return null; // TODO: throw exception
     }
