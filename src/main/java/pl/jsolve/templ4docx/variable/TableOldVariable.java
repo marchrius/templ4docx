@@ -149,6 +149,8 @@ public class TableOldVariable implements Variable {
             return imageVariables.get(key.getKey()).get(index);
         case BULLET_LIST:
             return bulletListVariables.get(key.getKey()).get(index);
+		default:
+			break;
         }
         return null;
     }
