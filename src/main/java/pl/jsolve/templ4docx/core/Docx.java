@@ -1,8 +1,10 @@
 package pl.jsolve.templ4docx.core;
 
+import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.Serializable;
@@ -175,10 +177,21 @@ public class Docx implements Serializable {
 
     public void setProcessMetaInformation(boolean processMetaInformation) {
         this.processMetaInformation = processMetaInformation;
+    }
 
     public VariablePattern getVariablePattern() {
         return variablePattern;
 
+    }
+        
+    public byte[] getBytes() {
+        ByteArrayOutputStream output = new ByteArrayOutputStream();
+        try {
+            docx.write(output);
+            return output.toByteArray();
+        } catch (IOException e) {
+            throw new OpenDocxException(e.getMessage(), e.getCause());
+        }
     }
 
 }
