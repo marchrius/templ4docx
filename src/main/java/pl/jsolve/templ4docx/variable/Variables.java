@@ -1,10 +1,10 @@
 package pl.jsolve.templ4docx.variable;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import pl.jsolve.sweetener.collection.Collections;
+import pl.jsolve.sweetener.collection.Maps;
 import pl.jsolve.templ4docx.util.Key;
 
 public class Variables {
@@ -14,13 +14,15 @@ public class Variables {
     private List<TableVariable> tableVariables;
     private Map<String, BulletListVariable> bulletListVariables;
     private Map<String, ObjectVariable> objectVariables;
+    private Map<String, DocumentVariable> documentVariables;
 
     public Variables() {
-        this.textVariables = new HashMap<String, TextVariable>();
-        this.imageVariables = new HashMap<String, ImageVariable>();
-        this.tableVariables = new ArrayList<TableVariable>();
-        this.bulletListVariables = new HashMap<String, BulletListVariable>();
-        this.objectVariables = new HashMap<String, ObjectVariable>();
+        this.textVariables = Maps.newHashMap();
+        this.imageVariables = Maps.newHashMap();
+        this.tableVariables = Collections.newArrayList();
+        this.bulletListVariables = Maps.newHashMap();
+        this.objectVariables = Maps.newHashMap();
+        this.documentVariables = Maps.newHashMap();
     }
 
     public TextVariable addTextVariable(TextVariable textVariable) {
@@ -40,9 +42,13 @@ public class Variables {
         this.bulletListVariables.put(bulletListVariable.getKey(), bulletListVariable);
         return bulletListVariable;
     }
+    
+    public DocumentVariable addDocumentVariable(DocumentVariable documentVariable){
+    	return this.documentVariables.put(documentVariable.getKey(), documentVariable);
+    }
 
     public List<ObjectVariable> addObjectVariable(ObjectVariable objectVariable) {
-        List<ObjectVariable> tree = new ArrayList<ObjectVariable>();
+        List<ObjectVariable> tree = Collections.newArrayList();
         tree.add(objectVariable);
         tree.addAll(objectVariable.getFieldVariablesTree());
         for (ObjectVariable var : tree) {
@@ -65,6 +71,10 @@ public class Variables {
 
     public Map<String, BulletListVariable> getBulletListVariables() {
         return bulletListVariables;
+    }
+    
+    public Map<String, DocumentVariable> getDocumentVariables(){
+    	return documentVariables;
     }
 
     public Map<String, ObjectVariable> getObjectVariables() {
@@ -90,6 +100,8 @@ public class Variables {
             return bulletListVariables.get(key.getKey());
         case OBJECT:
             return objectVariables.get(key.getKey());
+        case DOCUMENT:
+        	return documentVariables.get(key.getKey());
         }
         return null; // TODO: throw exception
     }
