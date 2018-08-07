@@ -10,6 +10,7 @@ import pl.jsolve.templ4docx.variable.Variables;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 
@@ -33,21 +34,27 @@ public class TestDocumentInsert extends AbstractDocumentInsertTest {
         Docx subDocx = new Docx(subIs);
         subIs.close();
 
-        docx.setVariablePattern(new VariablePattern("${", "}"));
+        docx.setVariablePattern(new VariablePattern("#{", "}"));
 
         Variables var = new Variables();
-        var.addDocumentVariable(new DocumentVariable("${document.1}", subDocx.getXWPFDocument()));
 
-        var.addDocumentVariable(new DocumentVariable("${document.2}", subDocx.getXWPFDocument()));
+        var.addDocumentVariable(new DocumentVariable("#{document.1}", subDocx.getXWPFDocument()));
 
-        var.addDocumentVariable(new DocumentVariable("${document.3}", subDocx.getXWPFDocument()));
+        var.addDocumentVariable(new DocumentVariable("#{document.2}", subDocx.getXWPFDocument()));
+
+        var.addDocumentVariable(new DocumentVariable("#{document.3}", subDocx.getXWPFDocument()));
+
+        var.addTextVariable(new TextVariable("#{cost}", "1234.56"));
+
+        var.addTextVariable(new TextVariable("#{form.bankIBAN}", "1234.56"));
+
+        List<String> placeholders = docx.findVariables();
 
         docx.fillTemplate(var);
 
         String tmpPath = System.getProperty("user.dir");
 
-        String processedPath = String.format("%s%s%s", tmpPath, File.separator,
-                documentFileName + "-processed" + ".docx");
+        String processedPath = String.format("%s%s%s", tmpPath, File.separator, documentFileName + "-processed" + ".docx");
 
         File parentFile = new File(processedPath);
         parentFile = parentFile.getParentFile();
@@ -64,17 +71,20 @@ public class TestDocumentInsert extends AbstractDocumentInsertTest {
 
         System.out.println(text);
 
-        assertEquals(
-                "This is test simple template with three variables: ${var01}, ${var02}, ${var03}.\n" +
-                        "\n" +
-                        "This is test simple template with three variables with long names: ${variableWithVeryVeryLongName01}, ${variableWithVeryVeryVeryVeryVeryVeryLongName02}, ${variableWithVeryVeryVeryVeryVeryVeryVeryVeryVeryVeryVeryVeryLongName03}.\n" +
-                        "\n" +
-                        "\n" +
-                        "\n" +
-                        "This is test simple template with three variables with long names: ${variableWithVeryVeryLongName01}, ${variableWithVeryVeryVeryVeryVeryVeryLongName02}, ${variableWithVeryVeryVeryVeryVeryVeryVeryVeryVeryVeryVeryVeryLongName03}.\n" +
-                        "\n" +
-                        "\n" +
-                        "This is test simple template with three variables with long names: ${variableWithVeryVeryLongName01}, ${variableWithVeryVeryVeryVeryVeryVeryLongName02}, ${variableWithVeryVeryVeryVeryVeryVeryVeryVeryVeryVeryVeryVeryLongName03}.",
+        assertEquals("This is test simple template with three variables: #{var01}, #{var02}, #{var03}.\n" +
+                "\n" +
+                "This is test simple template with three variables with long names: ${variableWithVeryVeryLongName01}, ${variableWithVeryVeryVeryVeryVeryVeryLongName02}, ${variableWithVeryVeryVeryVeryVeryVeryVeryVeryVeryVeryVeryVeryLongName03}.\n" +
+                "\n" +
+                "\n" +
+                "This is test simple template with three variables with long names: ${variableWithVeryVeryLongName01}, ${variableWithVeryVeryVeryVeryVeryVeryLongName02}, ${variableWithVeryVeryVeryVeryVeryVeryVeryVeryVeryVeryVeryVeryLongName03}.\n" +
+                "\n" +
+                "\n" +
+                "This is test simple template with three variables with long names: ${variableWithVeryVeryLongName01}, ${variableWithVeryVeryVeryVeryVeryVeryLongName02}, ${variableWithVeryVeryVeryVeryVeryVeryVeryVeryVeryVeryVeryVeryLongName03}.\n" +
+                "\n" +
+                "\n" +
+                "This document will cost you $ 1234.56\n" +
+                "\n" +
+                "IBAN / Account #:  1234.56",
                 text.trim());
     }
 
