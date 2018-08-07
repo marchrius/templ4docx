@@ -83,7 +83,7 @@ public class DocumentMetaProcessor {
     }
 
     /**
-     * @param document
+     * @param document The main document
      * @return All document paragraphs (including paragraphs in nested tables)
      */
     protected List<XWPFParagraph> getParagraphs(XWPFDocument document) {
@@ -96,7 +96,7 @@ public class DocumentMetaProcessor {
     }
 
     /**
-     * @param table
+     * @param table The table
      * @return All table paragraphs (including paragraphs in nested tables)
      */
     protected List<XWPFParagraph> getParagraphs(XWPFTable table) {
@@ -115,9 +115,9 @@ public class DocumentMetaProcessor {
     /**
      * Split every variable into separate run.
      *
-     * @param paragraph
-     * @param keys
-     * @param variablePattern
+     * @param paragraph The paragraph
+     * @param keysHolder The holder
+     * @param variablePattern The variable pattern
      */
     protected void moveVariablesToSeparateRun(XWPFParagraph paragraph, KeysHolder keysHolder,
             VariablePattern variablePattern) {
@@ -148,11 +148,10 @@ public class DocumentMetaProcessor {
     }
 
     /**
-     * @param paragraph
-     * @param run
-     * @param runIndex
-     *            current run index
-     * @param varName
+     * @param paragraph The paragraph
+     * @param run The run instance
+     * @param runIndex current run index
+     * @param varName The variable name
      * @return index of a last new run after splitting source run and creating new runs
      */
     protected int splitRunByVariable(XWPFParagraph paragraph, XWPFRun run, int runIndex, String varName) {
@@ -211,9 +210,9 @@ public class DocumentMetaProcessor {
     /**
      * Every variable in separate run will by marked by bookmark.
      *
-     * @param paragraph
-     * @param keys
-     * @param variablePattern
+     * @param paragraph The paragraph
+     * @param keysHolder The holder
+     * @param variablePattern The variable pattern
      */
     protected void markVariablesByBookmarks(XWPFParagraph paragraph, KeysHolder keysHolder,
             VariablePattern variablePattern) {
@@ -259,9 +258,9 @@ public class DocumentMetaProcessor {
     /**
      * Find bookmarks used as meta information for variables near the {@code run}.
      *
-     * @param run
-     * @param keysHolder
-     * @return
+     * @param run The run instance
+     * @param keysHolder The holder
+     * @return All bookmarks
      */
     protected List<VariableBookmark> getVariableBookmarks(XWPFRun run, KeysHolder keysHolder) {
         List<VariableBookmark> varBookmarks = new ArrayList<VariableBookmark>();
@@ -342,9 +341,9 @@ public class DocumentMetaProcessor {
     /**
      * Find bookmarks used as meta information for variables into the {@code paragraph}.
      *
-     * @param run
-     * @param keysHolder
-     * @return
+     * @param paragraph The paragraph
+     * @param keysHolder The holder
+     * @return All bookmarks as meta information
      */
     protected List<VariableBookmark> getVariableBookmarks(XWPFParagraph paragraph, KeysHolder keysHolder) {
         List<VariableBookmark> varBookmarks = new ArrayList<VariableBookmark>();
@@ -389,7 +388,7 @@ public class DocumentMetaProcessor {
     }
 
     /**
-     * @param document
+     * @param document The document instance
      * @return Max bookmark id in document
      */
     protected BigInteger getMaxBookmarkId(XWPFDocument document) {
@@ -409,8 +408,8 @@ public class DocumentMetaProcessor {
     /**
      * Create {@code w:bookmarkStart} before run with variable and {@code w:bookmarkEnd} after run with variable.
      *
-     * @param paragraph
-     * @param run
+     * @param paragraph The paragraph
+     * @param run The run instance
      */
     protected void markVarInRunByBookmark(XWPFParagraph paragraph, XWPFRun run) {
 
@@ -434,10 +433,10 @@ public class DocumentMetaProcessor {
     /**
      * Move bookmark to actual run.
      *
-     * @param paragraph
-     * @param run
-     * @param bookmarkStart
-     * @param bookmarkEnd
+     * @param paragraph The paragraph
+     * @param run The run instance
+     * @param bookmarkStart The bookmark start
+     * @param bookmarkEnd The bookmark end
      */
     protected void alignNodes(XWPFParagraph paragraph, XWPFRun run, CTBookmark bookmarkStart,
             CTMarkupRange bookmarkEnd) {
@@ -454,9 +453,8 @@ public class DocumentMetaProcessor {
      * Replace content of variable run between all {@code w:bookmarkStart} and {@code w:bookmarkEnd} with the variable
      * name. All other runs inside variable bookmarks will be removed.
      *
-     * @param paragraph
-     * @param keys
-     * @param variablePattern
+     * @param paragraph The paragraph
+     * @param keysHolder The holder
      */
     protected void clearVariablesInRunByBookmarks(XWPFParagraph paragraph, KeysHolder keysHolder) {
         List<VariableBookmark> varBookmarks = getVariableBookmarks(paragraph, keysHolder);
@@ -469,9 +467,9 @@ public class DocumentMetaProcessor {
      * Replace content of variable run between {@code w:bookmarkStart} and {@code w:bookmarkEnd} with the variable name.
      * All other runs inside variable bookmark will be removed.
      *
-     * @param paragraph
-     * @param varBookmark
-     * @param keysHolder
+     * @param paragraph The paragraph
+     * @param varBookmark The bookmark variable
+     * @param keysHolder The holder
      */
     protected void clearVariableBookmark(XWPFParagraph paragraph, VariableBookmark varBookmark, KeysHolder keysHolder) {
         Node paragraphNode = paragraph.getCTP().getDomNode();
@@ -681,9 +679,10 @@ public class DocumentMetaProcessor {
     /**
      * Extract decoded variable name from bookmark name.
      *
-     * @param bookmarkStart
-     * @param keysHolder
-     * @return
+     * @param bookmarkStart The bookmark start
+     * @param bookmarkEnd The bookmark end
+     * @param keysHolder The holder
+     * @return The decoded variable name from bookmark name
      */
     protected String getDecodedVarName(CTBookmark bookmarkStart, CTMarkupRange bookmarkEnd, KeysHolder keysHolder) {
         if (bookmarkStart == null)
@@ -714,8 +713,8 @@ public class DocumentMetaProcessor {
      * Encode bookmark name. Bookmark name will be contain id. This hack will be allow use one variable more times in
      * same document.
      *
-     * @param bookmark
-     * @param varName
+     * @param bookmark The bookmark
+     * @param varName The variable name
      */
     protected void setEncodedBookmarkName(CTBookmark bookmark, String varName) {
         String encodedVarName = DigestUtils.md5Hex(varName).toUpperCase();
