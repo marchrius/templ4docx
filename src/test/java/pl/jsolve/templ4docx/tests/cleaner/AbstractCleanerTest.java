@@ -3,20 +3,18 @@ package pl.jsolve.templ4docx.tests.cleaner;
 import java.io.File;
 
 import org.junit.Before;
+import pl.jsolve.templ4docx.tests.AbstractTest;
 
 /**
  * @author indvd00m (gotoindvdum[at]gmail[dot]com)
  *
  */
-public class AbstractCleanerTest {
+public class AbstractCleanerTest extends AbstractTest {
 
-    @Before
-    public void createTmpDirectory() {
-        String tmpPath = System.getProperty("java.io.tmpdir");
-        String testPath = String.format("%s%s%s", tmpPath, File.separator, "cleaner");
-        File testDir = new File(testPath);
-        if (!testDir.exists())
-            testDir.mkdirs();
-    }
-
+  @Before
+  public void createTmpDirectory() {
+    this.setTestPath(
+        String.format("%s%s", File.separator, "cleaner"));
+    super.createTmpDirectory();
+  }
 }
