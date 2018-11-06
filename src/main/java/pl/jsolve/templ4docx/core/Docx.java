@@ -19,6 +19,7 @@ import pl.jsolve.templ4docx.exception.OpenDocxException;
 import pl.jsolve.templ4docx.executor.DocumentExecutor;
 import pl.jsolve.templ4docx.extractor.VariablesExtractor;
 import pl.jsolve.templ4docx.meta.DocumentMetaProcessor;
+import pl.jsolve.templ4docx.variable.TextVariable;
 import pl.jsolve.templ4docx.variable.Variables;
 
 /**
@@ -129,6 +130,13 @@ public class Docx implements Serializable {
             documentMetaProcessor.processMetaInformation(this, variables, variablePattern);
         DocumentExecutor documentExecutor = new DocumentExecutor(variables);
         documentExecutor.execute(this);
+        // If there is at least 1 document insert, re-do the entire replace without document variable
+        boolean containDocumentInsert = false;
+
+        if (variables.getDocumentVariables().size() > 0) {
+            Variables _vs = variables.clone(false);
+            fillTemplate(_vs);
+        }
     }
 
     /**
