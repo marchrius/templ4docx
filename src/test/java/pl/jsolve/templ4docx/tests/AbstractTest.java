@@ -9,16 +9,20 @@ public class AbstractTest {
   protected Logger logger = Logger.getLogger(AbstractTest.class.getSimpleName());
 
   private String tmpDir = null;
+  private String instanceTempDirectory = null;
   private String testPath = null;
 
   public void createTmpDirectory() {
     this.tmpDir = System.getProperty("java.io.tmpdir");
-    File testDir = new File(String.format("%s%s", getTmpDir(), getTestPath()));
+    this.tmpDir = this.tmpDir.charAt(this.tmpDir.length() - 1) == File.separatorChar ? this.tmpDir.substring(0, this.tmpDir.length() - 1) : this.tmpDir;
+    this.instanceTempDirectory = String.format("%s%s", getTmpDir(), getTestPath());
+    File testDir = new File(this.instanceTempDirectory);
     if (!testDir.exists()) {
       if (!testDir.mkdirs()) {
         logger.warning("Directory \"" + testDir + "\" could not be created");
       }
     }
+    logger.info("Instance temp directory: " + this.getTempDirectory());
   }
 
   protected InputStream loadDocx(String filename) {
@@ -35,5 +39,18 @@ public class AbstractTest {
 
   public String getTmpDir() {
     return tmpDir;
+  }
+
+  public File getTempDirectory() {
+    return new File(instanceTempDirectory);
+  }
+
+  public String getRelative(String... paths) {
+    StringBuilder sb = new StringBuilder();
+    for (String s : paths) {
+      sb.append(s).append(File.separator);
+    }
+    sb.reverse().deleteCharAt(0).reverse();
+    return String.format("%s%s%s", instanceTempDirectory, File.separator, sb);
   }
 }
