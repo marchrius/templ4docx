@@ -1,5 +1,7 @@
 package pl.jsolve.templ4docx.extractor;
 
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -28,8 +30,9 @@ import pl.jsolve.templ4docx.util.Key;
 import pl.jsolve.templ4docx.variable.Variables;
 
 /**
- * Utility class responsible for preparing list of inserts. For each variable found in template file there is creating
- * appropriate insert (TextInsert, ImageInsert, BulletListInser or TableInsert)
+ * Utility class responsible for preparing list of inserts. For each variable found in template file
+ * there is creating appropriate insert (TextInsert, ImageInsert, BulletListInser or TableInsert)
+ *
  * @author Lukasz Stypka
  */
 public class VariableFinder {
@@ -39,15 +42,28 @@ public class VariableFinder {
     private ParagraphCleaner paragraphCleaner;
     private KeyExtractor keyExtractor;
 
+  private static Map<Class, Integer> MAP_PRIORITY = new HashMap<Class, Integer>();
+  static {
+    MAP_PRIORITY.put(DocumentInsert.class, 0);
+    MAP_PRIORITY.put(BulletListInsert.class, 1);
+    MAP_PRIORITY.put(TableRowInsert.class, 2);
+    MAP_PRIORITY.put(TableCellInsert.class, 3);
+    MAP_PRIORITY.put(ImageInsert.class, 4);
+    MAP_PRIORITY.put(ObjectInsert.class, 5);
+    MAP_PRIORITY.put(TextInsert.class, 6);
+  }
+
     public VariableFinder(Variables variables) {
         this.tableRowCleaner = new TableRowCleaner();
         this.paragraphCleaner = new ParagraphCleaner();
         this.keyExtractor = new KeyExtractor();
-        this.insertStrategyChooser = new InsertStrategyChooser(variables, tableRowCleaner, paragraphCleaner);
+    this.insertStrategyChooser = new InsertStrategyChooser(variables, tableRowCleaner,
+        paragraphCleaner);
     }
 
     /**
      * Returns list of inserts for found variables.
+   *
      * @param document Apache POI XWPFDocument object
      * @param variables Object which contains list of variables grouped by type
      * @return List of inserts
@@ -67,6 +83,7 @@ public class VariableFinder {
 
     /**
      * Finds variables recursively for each table in the template file
+   *
      * @param inserts List<Insert> inserts
      * @param tables List<XWPFTable> tables
      * @param keys List<Key> keys
@@ -88,13 +105,14 @@ public class VariableFinder {
 
     /**
      * Finds variables in given paragraph
+   *
      * @param paragraph XWPFParagraph paragraph
      * @param document  XWPFDocument document
      * @param cell XWPFTableCell cell
      * @param keys  List<Key> keys
-     * @return
      */
-    private List<Insert> find(XWPFParagraph paragraph, XWPFDocument document, XWPFTableCell cell, List<Key> keys) {
+  private List<Insert> find(XWPFParagraph paragraph, XWPFDocument document, XWPFTableCell cell,
+      List<Key> keys) {
         List<Insert> inserts = Collections.newArrayList();
         StringBuilder sb = new StringBuilder();
         for (XWPFRun run : paragraph.getRuns()) {
@@ -123,7 +141,7 @@ public class VariableFinder {
                     inserts.add(new ObjectInsert(key, paragraph));
                     break;
                 case DOCUMENT:
-                    inserts.add(new DocumentInsert(key, paragraph));
+            inserts.add(new DocumentInsert(key, paragraph, cell, document));
                     break;
                 }
             }
@@ -132,8 +150,9 @@ public class VariableFinder {
     }
 
     /**
-     * This method checks whether many Table Inserts belong to the same row. If so, cell inserts which belong to the
-     * same row are transform to one TableRowInsert.
+   * This method checks whether many Table Inserts belong to the same row. If so, cell inserts which
+   * belong to the same row are transform to one TableRowInsert.
+   *
      * @param inserts List<Insert> inserts
      * @param variables Variables variables
      */
@@ -169,14 +188,26 @@ public class VariableFinder {
     }
 
     /**
-     * Execute appropriate strategy for each insert. This method replace found variable (Insert) to appropriate strategy
-     * (replacing text, insert image, insert new row, insert bullet list)
+   * Execute appropriate strategy for each insert. This method replace found variable (Insert) to
+   * appropriate strategy (replacing text, insert image, insert new row, insert bullet list)
+   *
      * @param inserts Insert inserts
      */
     public void replace(List<Insert> inserts) {
+
+    // We replace list and documents variables first
+
+    java.util.Collections.sort(inserts, new Comparator<Insert>() {
+      @Override
+      public int compare(Insert o1, Insert o2) {
+        return MAP_PRIORITY.get(o1.getClass()).compareTo(MAP_PRIORITY.get(o2.getClass()));
+      }
+    });
+
         for (Insert insert : inserts) {
             insertStrategyChooser.replace(insert);
         }
+
         insertStrategyChooser.cleanUp();
     }
 
