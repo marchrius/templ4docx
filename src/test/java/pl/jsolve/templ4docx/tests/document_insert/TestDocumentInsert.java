@@ -16,7 +16,6 @@ import static org.junit.Assert.assertEquals;
 
 /**
  * @author indvd00m (gotoindvdum[at]gmail[dot]com)
- *
  */
 public class TestDocumentInsert extends AbstractDocumentInsertTest {
 
@@ -26,7 +25,8 @@ public class TestDocumentInsert extends AbstractDocumentInsertTest {
         InputStream is = getClass().getClassLoader().getResourceAsStream(documentFileName + ".docx");
 
         String subDocumentFileName = "document-insert/long-names";
-        InputStream subIs = getClass().getClassLoader().getResourceAsStream(subDocumentFileName + ".docx");
+    InputStream subIs = getClass().getClassLoader()
+        .getResourceAsStream(subDocumentFileName + ".docx");
 
         Docx docx = new Docx(is);
         is.close();
@@ -46,6 +46,13 @@ public class TestDocumentInsert extends AbstractDocumentInsertTest {
 
         var.addTextVariable(new TextVariable("#{cost}", "1234.56"));
 
+    var.addTextVariable("#{variableWithVeryVeryLongName01}", "Short");
+
+    var.addTextVariable("#{variableWithVeryVeryVeryVeryVeryVeryLongName02}", "Medium");
+
+    var.addTextVariable("#{variableWithVeryVeryVeryVeryVeryVeryVeryVeryVeryVeryVeryVeryLongName03}",
+        "Long");
+
         var.addTextVariable(new TextVariable("#{form.bankIBAN}", "1234.56"));
 
         List<String> placeholders = docx.findVariables();
@@ -54,7 +61,8 @@ public class TestDocumentInsert extends AbstractDocumentInsertTest {
 
         String tmpPath = System.getProperty("user.dir");
 
-        String processedPath = String.format("%s%s%s", tmpPath, File.separator, documentFileName + "-processed" + ".docx");
+    String processedPath = String
+        .format("%s%s%s", tmpPath, File.separator, documentFileName + "-processed" + ".docx");
 
         File parentFile = new File(processedPath);
         parentFile = parentFile.getParentFile();
@@ -71,20 +79,19 @@ public class TestDocumentInsert extends AbstractDocumentInsertTest {
 
         System.out.println(text);
 
-        assertEquals("This is test simple template with three variables: #{var01}, #{var02}, #{var03}.\n" +
-                "\n" +
-                "This is test simple template with three variables with long names: ${variableWithVeryVeryLongName01}, ${variableWithVeryVeryVeryVeryVeryVeryLongName02}, ${variableWithVeryVeryVeryVeryVeryVeryVeryVeryVeryVeryVeryVeryLongName03}.\n" +
-                "\n" +
-                "\n" +
-                "This is test simple template with three variables with long names: ${variableWithVeryVeryLongName01}, ${variableWithVeryVeryVeryVeryVeryVeryLongName02}, ${variableWithVeryVeryVeryVeryVeryVeryVeryVeryVeryVeryVeryVeryLongName03}.\n" +
-                "\n" +
-                "\n" +
-                "This is test simple template with three variables with long names: ${variableWithVeryVeryLongName01}, ${variableWithVeryVeryVeryVeryVeryVeryLongName02}, ${variableWithVeryVeryVeryVeryVeryVeryVeryVeryVeryVeryVeryVeryLongName03}.\n" +
-                "\n" +
-                "\n" +
-                "This document will cost you $ 1234.56\n" +
-                "\n" +
-                "IBAN / Account #:  1234.56",
+    assertEquals(
+        "This is test simple template with three variables with long names: Short, Medium, Long.\n"
+            + "\n"
+            + "\n"
+            + "This is test simple template with three variables with long names: Short, Medium, Long.\n"
+            + "\n"
+            + "\n"
+            + "This is test simple template with three variables with long names: Short, Medium, Long.\n"
+            + "\n"
+            + "\n"
+            + "This document will cost you $ 1234.56\n"
+            + "\n"
+            + "IBAN / Account #:  1234.56",
                 text.trim());
     }
 
