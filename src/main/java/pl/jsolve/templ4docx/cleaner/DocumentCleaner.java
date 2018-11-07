@@ -3,6 +3,7 @@ package pl.jsolve.templ4docx.cleaner;
 import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.apache.poi.xwpf.usermodel.XWPFParagraph;
 import org.apache.poi.xwpf.usermodel.XWPFRun;
 import org.apache.poi.xwpf.usermodel.XWPFTable;
@@ -18,6 +19,7 @@ import pl.jsolve.templ4docx.variable.Variables;
 
 /**
  * One variable may be shared by many XWPFRun. This class moves split variable to one XWPFRun
+ *
  * @author Lukasz Stypka
  */
 public class DocumentCleaner {
@@ -29,7 +31,9 @@ public class DocumentCleaner {
     }
 
     /**
-     * Main method for cleaning XWPFRun in whole document. This method moves split variable to one XWPFRun
+   * Main method for cleaning XWPFRun in whole document. This method moves split variable to one
+   * XWPFRun
+   *
      * @param docx Docx
      * @param variables variables
      * @param variablePattern variablePattern
@@ -38,6 +42,10 @@ public class DocumentCleaner {
         List<Key> keys = keyExtractor.extractKeys(variables);
         for (XWPFParagraph paragraph : docx.getXWPFDocument().getParagraphs()) {
             clean(paragraph.getRuns(), keys, variablePattern);
+      if (paragraph.isEmpty()) {
+        docx.getXWPFDocument()
+            .removeBodyElement(docx.getXWPFDocument().getParagraphs().indexOf(paragraph));
+      }
         }
 
         cleanTables(docx.getXWPFDocument().getTables(), keys, variablePattern);
@@ -45,11 +53,13 @@ public class DocumentCleaner {
 
     /**
      * Clean content of tables. This method is invoked recursively for each table
+   *
      * @param tables The list of table
      * @param keys The list of key
      * @param variablePattern The variable pattern
      */
-    private void cleanTables(List<XWPFTable> tables, List<Key> keys, VariablePattern variablePattern) {
+  private void cleanTables(List<XWPFTable> tables, List<Key> keys,
+      VariablePattern variablePattern) {
         for (XWPFTable table : tables) {
             for (XWPFTableRow row : table.getRows()) {
                 for (XWPFTableCell cell : row.getTableCells()) {
@@ -65,8 +75,10 @@ public class DocumentCleaner {
     }
 
     /**
-     * Clean list of XWPFRun. If one variable is split between many XWPFRun, this method will move this variable to run
-     * where variable begins. The text from other XWPFRuns which contain parts of found variable is cleaned.
+   * Clean list of XWPFRun. If one variable is split between many XWPFRun, this method will move
+   * this variable to run where variable begins. The text from other XWPFRuns which contain parts of
+   * found variable is cleaned.
+   *
      * @param runs The list of run instances
      * @param keys The list of key
      * @param variablePattern The variable pattern
@@ -80,6 +92,7 @@ public class DocumentCleaner {
             String notRecognizedPrefix = "";
             int notRecognizedVariableStartIndex = -1;
             for (int i = 0; i < runs.size(); i++) {
+        XWPFParagraph parent = (XWPFParagraph) runs.get(i).getParent();
                 String text = runs.get(i).getText(0);
                 if (text != null) {
                     // check whether variable is started but not ended
@@ -105,6 +118,23 @@ public class DocumentCleaner {
                                 Integer suffixIndex = suffixIndexesOf.get(0);
                                 runs.get(i).setText(text.substring(suffixIndex + 1), 0);
                                 i = notRecognizedVariableStartIndex;
+              } else {
+                // Set found variable to start run
+                String textFromStartRun = startRun.getText(0);
+                textFromStartRun = StringUtils.replace(textFromStartRun, notRecognizedPrefix,
+                    notRecognizedVariable);
+                startRun.setText(textFromStartRun, 0);
+
+                // clean runs between start and end variable pattern
+                for (int j = 0; j <= i; j++) {
+//                  parent.removeRun(parent.getRuns().indexOf(runs.get(j)));
+                  parent.removeRun(0);
+                }
+
+//                text = notRecognizedVariable;
+//                Integer suffixIndex = suffixIndexesOf.get(0);
+//                runs.get(i).setText(text.substring(suffixIndex + 1), 0);
+                i = notRecognizedVariableStartIndex;
                             }
 
                             notRecognizedVariableStartIndex = -1;
@@ -116,7 +146,8 @@ public class DocumentCleaner {
 
                     String prefix = getFirstChar(variablePattern.getPrefix());
                     List<Integer> prefixIndexesOf = Strings.indexesOf(text, prefix);
-                    if (!prefixIndexesOf.isEmpty() && Strings.indexesOf(text, variablePattern.getSuffix()).isEmpty()) {
+          if (!prefixIndexesOf.isEmpty() && Strings.indexesOf(text, variablePattern.getSuffix())
+              .isEmpty()) {
                         notRecognizedVariableStartIndex = i;
                         notRecognizedPrefix = text.substring(prefixIndexesOf.get(prefixIndexesOf.size() - 1));
                         notRecognizedVariable = notRecognizedPrefix;
@@ -142,7 +173,8 @@ public class DocumentCleaner {
 
     /**
      * @param prefix The prefix string
-     * @return Escaped first char. If string starts with \, the second char will be also included in returned string
+   * @return Escaped first char. If string starts with \, the second char will be also included in
+   * returned string
      */
     private String getFirstChar(String prefix) {
         if (prefix.length() == 1) {
