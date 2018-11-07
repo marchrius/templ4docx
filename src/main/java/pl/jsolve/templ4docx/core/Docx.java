@@ -139,7 +139,7 @@ public class Docx implements Serializable {
 
         if (variables.getDocumentVariables().size() > 0) {
           Variables _vs = variables.clone(true, false);
-            fillTemplate(_vs);
+          fillTemplate(_vs);
         }
     }
 
