@@ -131,10 +131,14 @@ public class Docx implements Serializable {
         DocumentExecutor documentExecutor = new DocumentExecutor(variables);
         documentExecutor.execute(this);
         // If there is at least 1 document insert, re-do the entire replace without document variable
-        boolean containDocumentInsert = false;
+
+        if (variables.getBulletListVariables().size() > 0) {
+          Variables _vs = variables.clone(false, true);
+          fillTemplate(_vs);
+        }
 
         if (variables.getDocumentVariables().size() > 0) {
-            Variables _vs = variables.clone(false);
+          Variables _vs = variables.clone(true, false);
             fillTemplate(_vs);
         }
     }
