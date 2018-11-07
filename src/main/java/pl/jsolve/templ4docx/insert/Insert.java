@@ -13,6 +13,11 @@ public abstract class Insert {
      */
     protected Key key;
 
+    /**
+     * boolean - if the insert is created from BulletList
+     */
+    protected boolean inAList;
+
     public Insert(Key key) {
         this.key = key;
     }
@@ -25,9 +30,17 @@ public abstract class Insert {
         this.key = key;
     }
 
+    public boolean isInAList() {
+        return inAList;
+    }
+
+    public void setInAList(boolean inAList) {
+        this.inAList = inAList;
+    }
+
     @Override
     public String toString() {
-        return "Insert [key=" + key + "]";
+			return "Insert [key=" + key + ", inAList=" + inAList + "]";
     }
 
 }
