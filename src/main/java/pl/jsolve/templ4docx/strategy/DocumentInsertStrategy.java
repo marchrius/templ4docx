@@ -94,7 +94,7 @@ public class DocumentInsertStrategy implements InsertStrategy {
         XWPFParagraph paragraph = (XWPFParagraph) bodyElement;
 
         // Copying styles from src document to match inserted paragraph styles
-//        copyStyle(subDocument, mainDocument, subDocument.getStyles().getStyle(paragraph.getStyleID()));
+        copyStyle(subDocument, mainDocument, subDocument.getStyles().getStyle(paragraph.getStyleID()));
 
         XWPFParagraph newParagraph;
 
