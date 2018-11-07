@@ -97,8 +97,8 @@ public class BulletListInsertStrategy implements InsertStrategy {
     }
     if (variableToInsert instanceof DocumentVariable) {
       return new DocumentInsert(new Key(key.getKey(), VariableType.DOCUMENT),
-          paragraph, originalInsert.getCellParent(), originalInsert.getDocumentParent());
-    }
+          paragraph, originalInsert.getCellParent(), originalInsert.getDocumentParent(), true);
+    } 
 
     return null;
   }
