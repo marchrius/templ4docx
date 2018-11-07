@@ -85,7 +85,7 @@ public class DocumentInsertStrategy implements InsertStrategy {
 
     boolean isFirst = true;
 
-    XmlCursor templateCursor /*= templateParagraph.getCTP().newCursor()*/;
+    XmlCursor templateCursor = templateParagraph.getCTP().newCursor();
 
     for (IBodyElement bodyElement : bodyElements) {
       BodyElementType bodyElementType = bodyElement.getElementType();
@@ -104,16 +104,18 @@ public class DocumentInsertStrategy implements InsertStrategy {
 
         // This will replace the template paragraph or, if necessary, add new one
 
-        templateCursor = templateParagraph.getCTP().newCursor();
 
-//        if (isFirst) {
-//          newParagraph = templateParagraph;
-//        } else {
+        if (isFirst) {
+          newParagraph = templateParagraph;
+        } else {
+          templateCursor.toNextSibling();
           newParagraph = templateParagraph.getBody().insertNewParagraph(templateCursor);
-//        }
+        }
 
+        templateCursor = newParagraph.getCTP().newCursor();
 
         cloneParagraph(newParagraph, paragraph);
+
 
         if (isFirst) {
           cloneParagraphNum(newParagraph, prevParagraph, nextParagraph);
