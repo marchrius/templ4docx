@@ -19,32 +19,32 @@ import static org.junit.Assert.assertEquals;
  */
 public class TestDocumentInsert extends AbstractDocumentInsertTest {
 
-    @Test
-    public void test() throws IOException {
-        String documentFileName = "document-insert/document-template";
-        InputStream is = getClass().getClassLoader().getResourceAsStream(documentFileName + ".docx");
+  @Test
+  public void test() throws IOException {
+    String documentFileName = "document-insert/document-template";
+    InputStream is = getClass().getClassLoader().getResourceAsStream(documentFileName + ".docx");
 
-        String subDocumentFileName = "document-insert/long-names";
+    String subDocumentFileName = "document-insert/long-names";
     InputStream subIs = getClass().getClassLoader()
         .getResourceAsStream(subDocumentFileName + ".docx");
 
-        Docx docx = new Docx(is);
-        is.close();
+    Docx docx = new Docx(is);
+    is.close();
 
-        Docx subDocx = new Docx(subIs);
-        subIs.close();
+    Docx subDocx = new Docx(subIs);
+    subIs.close();
 
-        docx.setVariablePattern(new VariablePattern("#{", "}"));
+    docx.setVariablePattern(new VariablePattern("#{", "}"));
 
-        Variables var = new Variables();
+    Variables var = new Variables();
 
-        var.addDocumentVariable(new DocumentVariable("#{document.1}", subDocx.getXWPFDocument()));
+    var.addDocumentVariable(new DocumentVariable("#{document.1}", subDocx.getXWPFDocument()));
 
-        var.addDocumentVariable(new DocumentVariable("#{document.2}", subDocx.getXWPFDocument()));
+    var.addDocumentVariable(new DocumentVariable("#{document.2}", subDocx.getXWPFDocument()));
 
-        var.addDocumentVariable(new DocumentVariable("#{document.3}", subDocx.getXWPFDocument()));
+    var.addDocumentVariable(new DocumentVariable("#{document.3}", subDocx.getXWPFDocument()));
 
-        var.addTextVariable(new TextVariable("#{cost}", "1234.56"));
+    var.addTextVariable(new TextVariable("#{cost}", "1234.56"));
 
     var.addTextVariable("#{variableWithVeryVeryLongName01}", "Short");
 
@@ -53,31 +53,31 @@ public class TestDocumentInsert extends AbstractDocumentInsertTest {
     var.addTextVariable("#{variableWithVeryVeryVeryVeryVeryVeryVeryVeryVeryVeryVeryVeryLongName03}",
         "Long");
 
-        var.addTextVariable(new TextVariable("#{form.bankIBAN}", "1234.56"));
+    var.addTextVariable(new TextVariable("#{form.bankIBAN}", "1234.56"));
 
-        List<String> placeholders = docx.findVariables();
+    List<String> placeholders = docx.findVariables();
 
-        docx.fillTemplate(var);
+    docx.fillTemplate(var);
 
-        String tmpPath = System.getProperty("user.dir");
+    String tmpPath = System.getProperty("user.dir");
 
     String processedPath = String
         .format("%s%s%s", tmpPath, File.separator, documentFileName + "-processed" + ".docx");
 
-        File parentFile = new File(processedPath);
-        parentFile = parentFile.getParentFile();
+    File parentFile = new File(processedPath);
+    parentFile = parentFile.getParentFile();
 
-        if (!parentFile.exists()) {
-            parentFile.mkdirs();
-        }
+    if (!parentFile.exists()) {
+      parentFile.mkdirs();
+    }
 
-        System.out.println(processedPath);
+    System.out.println(processedPath);
 
-        docx.save(processedPath);
+    docx.save(processedPath);
 
-        String text = docx.readTextContent();
+    String text = docx.readTextContent();
 
-        System.out.println(text);
+    System.out.println(text);
 
     assertEquals(
         "This is test simple template with three variables with long names: Short, Medium, Long.\n"
@@ -92,7 +92,7 @@ public class TestDocumentInsert extends AbstractDocumentInsertTest {
             + "This document will cost you $ 1234.56\n"
             + "\n"
             + "IBAN / Account #:  1234.56",
-                text.trim());
-    }
+        text.trim());
+  }
 
 }
