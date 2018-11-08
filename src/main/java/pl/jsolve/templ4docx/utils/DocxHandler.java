@@ -229,4 +229,229 @@ public class DocxHandler {
       docPr.setId(id);
     }
   }
+
+  public static XWPFPicture clonePicture(XWPFRun sourceRun, XWPFRun destRun, int index) throws InvalidFormatException, IOException {
+    String relationId;
+    XWPFPictureData picData;
+    IRunBody parent = destRun.getParent();
+
+    CTAnchor anchor = null;
+    CTInline inline = null;
+    boolean isAnchor;
+
+    CTAnchor sAnchor = null;
+    CTInline sInline = null;
+
+    XWPFPicture sourcePicture = sourceRun.getEmbeddedPictures().get(index);
+    XWPFPictureData sourcePictureData = sourcePicture.getPictureData();
+    CTDrawing sourceDrawing = sourceRun.getCTR().getDrawingArray(0);
+
+    if (sourceDrawing.sizeOfInlineArray() > 0) {
+      isAnchor = false;
+    } else if (sourceDrawing.sizeOfAnchorArray() > 0) {
+      isAnchor = true;
+    } else {
+      return null;
+    }
+
+    ByteArrayInputStream pictureData = new ByteArrayInputStream(sourcePictureData.getData());
+
+    if (parent.getPart() instanceof XWPFHeaderFooter) {
+      XWPFHeaderFooter headerFooter = (XWPFHeaderFooter) parent.getPart();
+      relationId = headerFooter.addPictureData(pictureData, sourcePictureData.getPictureType());
+      picData = (XWPFPictureData) headerFooter.getRelationById(relationId);
+    } else {
+      @SuppressWarnings("resource")
+      XWPFDocument doc = parent.getDocument();
+      relationId = doc.addPictureData(pictureData, sourcePictureData.getPictureType());
+      picData = (XWPFPictureData) doc.getRelationById(relationId);
+    }
+
+    // Create the drawing entry for it
+//    try {
+      CTDrawing destDrawing = destRun.getCTR().addNewDrawing();
+
+      if (isAnchor) {
+        sAnchor = sourceDrawing.getAnchorArray(0);
+        anchor = destDrawing.addNewAnchor();
+        anchor.set(sAnchor);
+      } else {
+        sInline = sourceDrawing.getInlineArray(0);
+        inline = destDrawing.addNewInline();
+        inline.set(sInline);
+      }
+
+      // Do the fiddly namespace bits on the inline
+      // (We need full control of what goes where and as what)
+//      String xml =
+//          "<a:graphic xmlns:a=\"" + CTGraphicalObject.type.getName().getNamespaceURI() + "\">" +
+//              "<a:graphicData uri=\"" + CTPicture.type.getName().getNamespaceURI() + "\">" +
+//              "<pic:pic xmlns:pic=\"" + CTPicture.type.getName().getNamespaceURI() + "\" />" +
+//              "</a:graphicData>" +
+//              "</a:graphic>";
+//
+//      XmlToken xmlToken = null;
+//      org.w3c.dom.Document doc;
+//
+//      InputSource is = new InputSource(new StringReader(xml));
+//      doc = DocumentHelper.readDocument(is);
+//      xmlToken = XmlToken.Factory.parse(doc.getDocumentElement(), DEFAULT_XML_OPTIONS);
+//
+//      if (xmlToken == null) {
+//        throw new IOException();
+//      }
+//
+//      if (isAnchor) {
+//        anchor.set(xmlToken);
+//      } else {
+//        inline.set(xmlToken);
+//      }
+
+      // Setup the inline
+      if (isAnchor) {
+//        anchor.setDistT(0);
+//        anchor.setDistR(0);
+//        anchor.setDistB(0);
+//        anchor.setDistL(0);
+      } else {
+//        inline.setDistT(0);
+//        inline.setDistR(0);
+//        inline.setDistB(0);
+//        inline.setDistL(0);
+      }
+
+      CTNonVisualDrawingProps docPr = null;
+      CTPositiveSize2D extent = null;
+      CTGraphicalObject graphic = null;
+
+      if (isAnchor) {
+        docPr = anchor.getDocPr();
+      } else {
+        docPr = inline.getDocPr();
+      }
+
+      long id = parent.getDocument().getNextPicNameNumber(sourcePictureData.getPictureType());
+
+      docPr.setId(id);
+      /* This name is not visible in Word 2010 anywhere. */
+      docPr.setName("Drawing " + id);
+      docPr.setDescr(sourcePictureData.getFileName());
+
+      if (isAnchor) {
+        extent = anchor.getExtent();
+      } else {
+        extent = inline.getExtent();
+      }
+
+      extent.setCx(sourcePicture.getCTPicture().getSpPr().getXfrm().getExt().getCx());
+      extent.setCy(sourcePicture.getCTPicture().getSpPr().getXfrm().getExt().getCy());
+
+      // Grab the picture object
+      if (isAnchor) {
+        graphic = anchor.getGraphic();
+      } else {
+        graphic = inline.getGraphic();
+      }
+
+      CTGraphicalObjectData graphicData = graphic.getGraphicData();
+      CTPicture pic = DocxHandler.getCTPictures(graphicData).get(0);
+
+      // Set it up
+      CTPictureNonVisual nvPicPr = pic.getNvPicPr();
+
+      CTNonVisualDrawingProps cNvPr = nvPicPr.getCNvPr();
+
+      /* use "0" for the id. See ECM-576, 20.2.2.3 */
+      cNvPr.setId(0L);
+      /* This name is not visible in Word 2010 anywhere */
+      cNvPr.setName("Picture " + id);
+      cNvPr.setDescr(sourcePictureData.getFileName());
+
+      CTNonVisualPictureProperties cNvPicPr = nvPicPr.getCNvPicPr();
+
+      CTBlipFillProperties blipFill = pic.getBlipFill();
+      CTBlip blip = blipFill.getBlip();
+//      blip.setEmbed(parent.getPart().getRelationId(picData));
+      blip.setEmbed(relationId);
+      if (blip.getExtLst() != null && blip.getExtLst().sizeOfExtArray() > 0) {
+        for (int i = 0, len = blip.getExtLst().sizeOfExtArray(); i < len; i++) {
+          blip.getExtLst().removeExt(i);
+        }
+      }
+
+      blipFill.getStretch().getFillRect();
+
+      CTShapeProperties spPr = pic.getSpPr() != null ? pic.getSpPr() : pic.addNewSpPr();
+      CTTransform2D xfrm = spPr.getXfrm() != null ? spPr.getXfrm() : spPr.addNewXfrm();
+
+      CTPoint2D off = xfrm.getOff() != null ? xfrm.getOff() : xfrm.addNewOff();
+      off.setX(0);
+      off.setY(0);
+
+      CTPositiveSize2D ext = xfrm.getExt() != null ? xfrm.getExt() : xfrm.addNewExt();
+      ext.setCx(extent.getCx());
+      ext.setCy(extent.getCy());
+
+      CTPresetGeometry2D prstGeom = spPr.getPrstGeom() != null ? spPr.getPrstGeom() : spPr.addNewPrstGeom();
+
+      prstGeom.setPrst(STShapeType.RECT);
+      if (prstGeom.getAvLst() == null) {
+        prstGeom.addNewAvLst();
+      }
+
+      // Fix bug: Bug 55476 - after XWPFRun.addPicture() Word considers the document as corrupted
+      XmlObject[] pics = graphicData.selectChildren(new QName(CTPicture.type.getName().getNamespaceURI(), "pic"));
+      pics[0].set(pic);
+
+      // Finish up
+      return new XWPFPicture(pic, destRun);
+//      XWPFPicture xwpfPicture = new XWPFPicture(pic, destRun);
+//      pictures.add(xwpfPicture);
+//      return xwpfPicture;
+//    } catch (XmlException e) {
+//      throw new IllegalStateException(e);
+//    } catch (SAXException e) {
+//      throw new IllegalStateException(e);
+//    }
+  }
+
+  public static int getPictureFormat(String filename) {
+    String _sanitizedFilename = StringUtils.trimToNull(filename);
+
+    if (_sanitizedFilename == null) {
+      return 0;
+    }
+
+    String ext = StringUtils.right(_sanitizedFilename, 4);
+
+    if (EXTENSIONS_MAPPING.containsKey(ext)) {
+      return EXTENSIONS_MAPPING.get(ext);
+    }
+
+    return 0;
+  }
+
+  public static Set<Integer> getAllPictureFormats() {
+    return new HashSet<Integer>(EXTENSIONS_MAPPING.values());
+  }
+
+  public static List<CTPicture> getCTPictures(XmlObject o) {
+      List<CTPicture> pics = new ArrayList<CTPicture>();
+      XmlObject[] picts = o.selectPath("declare namespace pic='" + CTPicture.type.getName().getNamespaceURI() + "' .//pic:pic");
+      for (XmlObject pict : picts) {
+        if (pict instanceof XmlAnyTypeImpl) {
+          // Pesky XmlBeans bug - see Bugzilla #49934
+          try {
+            pict = CTPicture.Factory.parse(pict.toString(), DEFAULT_XML_OPTIONS);
+          } catch (XmlException e) {
+            throw new POIXMLException(e);
+          }
+        }
+        if (pict instanceof CTPicture) {
+          pics.add((CTPicture) pict);
+        }
+      }
+      return pics;
+    }
+
 }
