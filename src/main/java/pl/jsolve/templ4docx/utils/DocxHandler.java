@@ -63,53 +63,73 @@ public class DocxHandler {
     }
   }
 
-  public static void createPicture(XWPFParagraph paragraph, String blipId, int id, long width, long height) {
-    createPicture(paragraph, blipId, id, width, height, 0, 0);
+  public static void createPicture(
+      XWPFRun sourceRun, XWPFRun destRun, String blipId, int id, long width, long height) {
+    createPicture(sourceRun, destRun, blipId, id, width, height, 0, 0);
   }
 
-  public static void createPictureCxCy(XWPFParagraph paragraph, String blipId, int id, long cx, long cy) {
-    createPictureCxCy(paragraph, blipId, id, cx, cy, 0, 0);
+  public static void createPictureCxCy(
+      XWPFRun sourceRun, XWPFRun destRun, String blipId, int id, long cx, long cy) {
+    createPictureCxCy(sourceRun, destRun, blipId, id, cx, cy, 0, 0);
   }
 
-  public static void createPicture(XWPFParagraph paragraph, String blipId, int id, long width, long height, long x, long y) {
+  public static void createPicture(
+      XWPFRun sourceRun, XWPFRun destRun, String blipId, int id, long width, long height, long x, long y) {
     long cx = Units.toEMU(width);
     long cy = Units.toEMU(height);
 
-    createPictureCxCy(paragraph, blipId, id, cx, cy, x, y);
+    createPictureCxCy(sourceRun, destRun, blipId, id, cx, cy, x, y);
   }
 
-  public static void createPictureCxCy(XWPFParagraph paragraph, String blipId, int id, long cx, long cy, long x, long y) {
+  public static void createPictureCxCy(
+      XWPFRun sourceRun, XWPFRun destRun, String blipId, int id, long cx, long cy, long x, long y) {
 
-    CTInline inline = paragraph.createRun().getCTR().addNewDrawing().addNewInline();
+    CTDrawing drawing = sourceRun.getCTR().getDrawingArray(0);
+
+    boolean isAnchor = false, isInline = false;
+
+    CTAnchor aDst = null, aSrc = null;
+    CTInline iDst = null, iSrc = null;
+
+    CTGraphicalObject graphic = null;
+    CTPositiveSize2D extent = null;
+    CTNonVisualDrawingProps docPr = null;
+
+    if (drawing.sizeOfAnchorArray() > 0) {
+      aDst = destRun.getCTR().addNewDrawing().addNewAnchor();
+      isAnchor = true;
+    } else if (drawing.sizeOfInlineArray() > 0) {
+      iDst = destRun.getCTR().addNewDrawing().addNewInline();
+      isInline = true;
+    }
 
     String picXml = "" +
-        "<a:graphic xmlns:a=\"http://schemas.openxmlformats.org/drawingml/2006/main\">" +
-        "   <a:graphicData uri=\"http://schemas.openxmlformats.org/drawingml/2006/picture\">" +
-        "      <pic:pic xmlns:pic=\"http://schemas.openxmlformats.org/drawingml/2006/picture\">" +
-        "         <pic:nvPicPr>" +
-        "            <pic:cNvPr id=\"" + id + "\" name=\"Generated\"/>" +
-        "            <pic:cNvPicPr/>" +
-        "         </pic:nvPicPr>" +
-        "         <pic:blipFill>" +
-        "            <a:blip r:embed=\"" + blipId + "\" xmlns:r=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships\"/>" +
-        "            <a:stretch>" +
-        "               <a:fillRect/>" +
-        "            </a:stretch>" +
-        "         </pic:blipFill>" +
-        "         <pic:spPr>" +
-        "            <a:xfrm>" +
-        "               <a:off x=\"" + x + "\" y=\"" + y + "\"/>" +
-        "               <a:ext cx=\"" + cx + "\" cy=\"" + cy + "\"/>" +
-        "            </a:xfrm>" +
-        "            <a:prstGeom prst=\"rect\">" +
-        "               <a:avLst/>" +
-        "            </a:prstGeom>" +
-        "         </pic:spPr>" +
-        "      </pic:pic>" +
-        "   </a:graphicData>" +
-        "</a:graphic>";
+        "<w:graphic xmlns:w=\"http://schemas.openxmlformats.org/drawingml/2006/main\">" +
+        "  <w:graphicData uri=\"http://schemas.openxmlformats.org/drawingml/2006/picture\">" +
+        "    <pic:pic xmlns:pic=\"http://schemas.openxmlformats.org/drawingml/2006/picture\">" +
+        "      <pic:nvPicPr>" +
+        "        <pic:cNvPr id=\"" + id + "\" name=\"Generated\"/>" +
+        "        <pic:cNvPicPr/>" +
+        "      </pic:nvPicPr>" +
+        "      <pic:blipFill>" +
+        "        <w:blip r:embed=\"" + blipId + "\" xmlns:r=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships\"/>" +
+        "        <w:stretch>" +
+        "          <w:fillRect/>" +
+        "        </w:stretch>" +
+        "      </pic:blipFill>" +
+        "      <pic:spPr>" +
+        "        <w:xfrm>" +
+        "          <w:off x=\"0\" y=\"0\"/>" +
+        "          <w:ext cx=\"0\" cy=\"0\"/>" +
+        "        </w:xfrm>" +
+        "        <w:prstGeom prst=\"rect\">" +
+        "          <w:avLst/>" +
+        "        </w:prstGeom>" +
+        "      </pic:spPr>" +
+        "    </pic:pic>" +
+        "  </w:graphicData>" +
+        "</w:graphic>";
 
-//    CTGraphicalObjectData graphicData = inline.addNewGraphic().addNewGraphicData();
     XmlToken xmlToken = null;
     try
     {
@@ -119,21 +139,63 @@ public class DocxHandler {
     {
       xe.printStackTrace();
     }
-    inline.set(xmlToken);
-//    graphicData.set(xmlToken);
 
-    inline.setDistT(0);
-    inline.setDistB(0);
-    inline.setDistL(0);
-    inline.setDistR(0);
+    if (isAnchor) {
+      aSrc = drawing.getAnchorArray(0);
 
-    CTPositiveSize2D extent = inline.addNewExtent();
-    extent.setCx(cx);
-    extent.setCy(cy);
+//      graphic = aDst.addNewGraphic();
+//      graphic.set(xmlToken);
+//
+//      aDst.setGraphic(graphic);
 
-    CTNonVisualDrawingProps docPr = inline.addNewDocPr();
-    docPr.setId(id);
-    docPr.setName("Picture " + id);
-    docPr.setDescr("Generated");
+      aDst.set(xmlToken);
+
+      aDst.setDistB(aSrc.getDistB());
+      aDst.setDistL(aSrc.getDistL());
+      aDst.setDistR(aSrc.getDistR());
+      aDst.setDistT(aSrc.getDistT());
+      aDst.setSimplePos(aSrc.getSimplePos());
+      aDst.setSimplePos2(aSrc.getSimplePos2());
+      aDst.setAllowOverlap(aSrc.getAllowOverlap());
+      aDst.setBehindDoc(aSrc.getBehindDoc());
+      aDst.setHidden(aSrc.getHidden());
+      aDst.setPositionH(aSrc.getPositionH());
+      aDst.setPositionV(aSrc.getPositionV());
+      aDst.setRelativeHeight(aSrc.getRelativeHeight());
+      aDst.setCNvGraphicFramePr(aSrc.getCNvGraphicFramePr());
+      aDst.setDocPr(aSrc.getDocPr());
+      aDst.setEffectExtent(aSrc.getEffectExtent());
+
+      extent = aDst.getExtent() != null ? aDst.getExtent() : aDst.addNewExtent();
+      docPr = aDst.getDocPr() != null ? aDst.getDocPr() : aDst.addNewDocPr();
+    } else if (isInline) {
+      iSrc = drawing.getInlineArray(0);
+
+      graphic = iDst.addNewGraphic();
+      graphic.set(xmlToken);
+
+      iDst.setGraphic(graphic);
+
+      iDst.setDistB(iSrc.getDistB());
+      iDst.setDistL(iSrc.getDistL());
+      iDst.setDistR(iSrc.getDistR());
+      iDst.setDistT(iSrc.getDistT());
+      iDst.setCNvGraphicFramePr(iSrc.getCNvGraphicFramePr());
+      iDst.setDocPr(iSrc.getDocPr());
+
+      extent = iDst.getExtent() != null ? iDst.getExtent() : iDst.addNewExtent();
+      docPr = iDst.getDocPr() != null ? iDst.getDocPr() : iDst.addNewDocPr();
+    }
+
+    if (extent != null) {
+      extent.setCx(cx);
+      extent.setCy(cy);
+    }
+
+    if (docPr != null) {
+//      docPr.setName("Picture " + id);
+//      docPr.setDescr("Generated");
+      docPr.setId(id);
+    }
   }
 }
