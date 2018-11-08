@@ -1,17 +1,25 @@
 package pl.jsolve.templ4docx.strategy;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 
+import java.util.Map;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
+import org.apache.poi.util.Units;
 import org.apache.poi.xwpf.usermodel.BodyElementType;
 import org.apache.poi.xwpf.usermodel.Document;
 import org.apache.poi.xwpf.usermodel.IBodyElement;
+import org.apache.poi.xwpf.usermodel.NumberingUtil;
+import org.apache.poi.xwpf.usermodel.XWPFAbstractNum;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
+import org.apache.poi.xwpf.usermodel.XWPFNum;
+import org.apache.poi.xwpf.usermodel.XWPFNumbering;
 import org.apache.poi.xwpf.usermodel.XWPFParagraph;
 import org.apache.poi.xwpf.usermodel.XWPFPicture;
 import org.apache.poi.xwpf.usermodel.XWPFPictureData;
@@ -20,13 +28,19 @@ import org.apache.poi.xwpf.usermodel.XWPFStyle;
 import org.apache.poi.xwpf.usermodel.XWPFTable;
 import org.apache.poi.xwpf.usermodel.XWPFTableRow;
 import org.apache.xmlbeans.XmlCursor;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTAbstractNum;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTDecimalNumber;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTDrawing;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTNumPr;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTOnOff;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTPPr;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTRPr;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTRow;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTString;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTTblPr;
 
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.STOnOff;
+import pl.jsolve.sweetener.collection.Maps;
 import pl.jsolve.templ4docx.insert.DocumentInsert;
 import pl.jsolve.templ4docx.insert.Insert;
 import pl.jsolve.templ4docx.utils.DocxHandler;
@@ -83,18 +97,23 @@ public class DocumentInsertStrategy implements InsertStrategy {
 
 //		List<IBodyElement> bodyElements = getReverseListOfBodyElements(documentVariable.getDocument());
 
-    boolean isFirst = true;
-
     XmlCursor templateCursor = templateParagraph.getCTP().newCursor();
+
+    XWPFParagraph firstParagraph = null;
+
+    String documentIdentifier = subDocument.getProperties().getCoreProperties().getIdentifier();
 
     for (IBodyElement bodyElement : bodyElements) {
       BodyElementType bodyElementType = bodyElement.getElementType();
 
-      if (bodyElementType.equals(BodyElementType.PARAGRAPH)) {
-        XWPFParagraph paragraph = (XWPFParagraph) bodyElement;
+      boolean clonedRunOnly = false;
 
-        // Copying styles from src document to match inserted paragraph styles
-        copyStyle(subDocument, mainDocument, subDocument.getStyles().getStyle(paragraph.getStyleID()));
+      // Copying numbering from src document to match inserted paragraph styles
+//      copyNumbering(documentIdentifier, subDocument, mainDocument);
+
+      if (bodyElementType.equals(BodyElementType.PARAGRAPH)) {
+
+        XWPFParagraph paragraph = (XWPFParagraph) bodyElement;
 
         XWPFParagraph newParagraph;
 
@@ -102,39 +121,80 @@ public class DocumentInsertStrategy implements InsertStrategy {
 //        XWPFParagraph newParagraph = templateParagraph.getDocument().createParagraph();
 //        XWPFParagraph newParagraph = new XWPFParagraph(templateParagraph.getCTP(), templateParagraph.getBody());
 
+        // Copying styles from src document to match inserted paragraph styles
+        copyStyle(subDocument, mainDocument, subDocument.getStyles().getStyle(((XWPFParagraph) bodyElement).getStyleID()));
+
         // This will replace the template paragraph or, if necessary, add new one
-
-
-        if (isFirst) {
+        if (firstParagraph == null) {
           newParagraph = templateParagraph;
+          firstParagraph = newParagraph;
+          // move cursor to next for the next insertNewParagraph
+          templateCursor = newParagraph.getCTP().newCursor();
+        } else if (insert.isInAList() || firstParagraph.getNumID() != null) {
+          newParagraph = firstParagraph;
+          XWPFRun run = firstParagraph.createRun();
+          run.addBreak();
+          cloneParagraphRunInParagraph(firstParagraph, paragraph);
+          clonedRunOnly = true;
         } else {
+          // move the cursor to next
           templateCursor.toNextSibling();
+          // and add the new paragraph
           newParagraph = templateParagraph.getBody().insertNewParagraph(templateCursor);
+          // move cursor to next for the next insertNewParagraph
+          templateCursor = newParagraph.getCTP().newCursor();
         }
 
-        templateCursor = newParagraph.getCTP().newCursor();
+        if (!clonedRunOnly) {
+          cloneParagraph(newParagraph, paragraph, templateParagraph);
+        }
 
-        cloneParagraph(newParagraph, paragraph);
-
-
-        if (isFirst) {
+        // if is first insertion, copy the numerating properties from paragraph, if any
+        if (newParagraph == firstParagraph && (insert.isInAList() || newParagraph.getNumID() != null)) {
+          clearParagraphNum(newParagraph);
           cloneParagraphNum(newParagraph, prevParagraph, nextParagraph);
+//        } else {
+//          clearParagraphNum(newParagraph);
         }
 
       } else if (bodyElementType.equals(BodyElementType.TABLE)) {
         templateCursor = templateParagraph.getCTP().newCursor();
-         XWPFTable table = (XWPFTable) bodyElement;
+        XWPFTable table = (XWPFTable) bodyElement;
         XWPFTable newTable = templateParagraph.getDocument().insertNewTbl(templateCursor);
+
+        copyStyle(subDocument, mainDocument, subDocument.getStyles().getStyle(((XWPFTable) bodyElement).getStyleID()));
+
         cloneTable(newTable, table);
       }
-
-
-      isFirst = false;
     }
     clean(templateParagraph, insert);
   }
 
+  private void clearParagraphNum(XWPFParagraph dest) {
+    if (dest.getCTP() != null) {
+      CTPPr ctpPr = dest.getCTP().getPPr();
+      if (ctpPr == null) {
+        ctpPr = dest.getCTP().addNewPPr();
+      }
+      CTNumPr ctNumPr = ctpPr.getNumPr();
+      if (ctNumPr == null) {
+        ctNumPr = ctpPr.addNewNumPr();
+      }
+      CTDecimalNumber ctNumIlvl = ctNumPr.getIlvl();
+      if (ctNumIlvl == null) {
+        ctNumIlvl = ctNumPr.addNewIlvl();
+      }
+      ctNumIlvl.setVal(null);
+    }
+    dest.setNumID(null);
+    dest.setStyle(null);
+  }
+
   private void cloneParagraphNum(XWPFParagraph dest, XWPFParagraph prevSource, XWPFParagraph nextSource) {
+    if (dest == null) {
+      return;
+    }
+
     if (prevSource == null && nextSource == null) {
       dest.setNumID(BigInteger.ZERO);
       return;
@@ -164,10 +224,53 @@ public class DocumentInsertStrategy implements InsertStrategy {
     }
   }
 
+  private void cloneParagraphRunInParagraph(XWPFParagraph clone, XWPFParagraph source) {
+    if (clone == null || source == null) {
+      return;
+    }
+
+    // we do not copy properties as the clone paragraph is meant to be already set up
+
+//    CTPPr pPr = clone.getCTP().isSetPPr() ? clone.getCTP().getPPr() : clone.getCTP().addNewPPr();
+//    pPr.set(source.getCTP().getPPr());
+
+    // Cloning all runs into this paragraph
+    for (XWPFRun r : source.getRuns()) {
+      XWPFRun newRun = clone.createRun();
+      cloneRun(newRun, r);
+    }
+  }
+
   private void cloneParagraph(XWPFParagraph clone, XWPFParagraph source) {
+    cloneParagraph(clone, source, null);
+  }
+
+  private void cloneParagraph(XWPFParagraph clone, XWPFParagraph source, XWPFParagraph propertiesTemplate) {
+    if (clone == null || source == null) {
+      return;
+    }
+
+    String sourceIdentifier = source.getDocument().getProperties().getCoreProperties().getIdentifier();
+
     CTPPr pPr = clone.getCTP().isSetPPr() ? clone.getCTP().getPPr() : clone.getCTP().addNewPPr();
 
+    // copy the source paragraph properties into cloned one
     pPr.set(source.getCTP().getPPr());
+
+//    Map<BigInteger, XWPFNum> numbs = getNums(clone.getDocument());
+//    XWPFNumbering cloneNumbs = clone.getDocument().getNumbering();
+
+//    if (clone.getNumID() != null) {
+//      XWPFAbstractNum abstractNum = cloneNumbs.getAbstractNum(clone.getNumID());
+//      String str = sourceIdentifier + " " + abstractNum.getCTAbstractNum().getLvlArray(0).getPStyle().getVal();
+//      XWPFNum newNum = numbs.get(str);
+//      clone.setNumID(newNum.getCTNum().getNumId());
+//    }
+
+//    CTOnOff keepNext = CTOnOff.Factory.newInstance();
+//    keepNext.setVal(STOnOff.ON);
+//    pPr.setKeepNext(keepNext);
+
     for (XWPFRun r : source.getRuns()) {
       XWPFRun newRun = clone.createRun();
       cloneRun(newRun, r);
@@ -175,6 +278,10 @@ public class DocumentInsertStrategy implements InsertStrategy {
   }
 
   private void cloneRun(XWPFRun clone, XWPFRun source) {
+    if (clone == null || source == null) {
+      return;
+    }
+
     CTRPr rPr = clone.getCTR().isSetRPr() ? clone.getCTR().getRPr() : clone.getCTR().addNewRPr();
     rPr.set(source.getCTR().getRPr());
     clone.setText(source.getText(0));
@@ -194,23 +301,41 @@ public class DocumentInsertStrategy implements InsertStrategy {
     if (hasImages) {
       for (XWPFPicture pic : source.getEmbeddedPictures()) {
 
-        XWPFPictureData pictureData = pic.getPictureData();
-
-        byte[] data = pictureData.getData();
-
-        long cx = pic.getCTPicture().getSpPr().getXfrm().getExt().getCx();
-        long cy = pic.getCTPicture().getSpPr().getXfrm().getExt().getCy();
-        // This x and y are relative to cx and cy
-        long x = pic.getCTPicture().getSpPr().getXfrm().getExt().xgetCx().getLongValue();
-        long y = pic.getCTPicture().getSpPr().getXfrm().getExt().xgetCy().getLongValue();
-
+//        XWPFPictureData pictureData = pic.getPictureData();
+//
+//        byte[] data = pictureData.getData();
+//
+//        long cx = pic.getCTPicture().getSpPr().getXfrm().getExt().getCx();
+//        long cy = pic.getCTPicture().getSpPr().getXfrm().getExt().getCy();
+//        // This x and y are relative to cx and cy
+//        long x = pic.getCTPicture().getSpPr().getXfrm().getExt().xgetCx().getLongValue();
+//        long y = pic.getCTPicture().getSpPr().getXfrm().getExt().xgetCy().getLongValue();
+//
         try {
 
-          String blipId = clone.getDocument().addPictureData(data, pictureData.getPictureType());
-          DocxHandler.createPictureCxCy((XWPFParagraph) clone.getParent(), blipId, clone.getDocument().getNextPicNameNumber(pictureData.getPictureType()), cx, cy);
+//          // not working. DO NOT USE
+//          clone.addPicture(new ByteArrayInputStream(data), pictureData.getPictureType(), pictureData.getFileName(), Units.pointsToPixel(Units.toPoints(cx)), Units.pointsToPixel(Units.toPoints(cy)));
 
+//          String blipId = clone.getDocument().addPictureData(data, pictureData.getPictureType());
+//          DocxHandler.createPictureCxCy(source, clone, blipId,
+//              clone.getDocument().getNextPicNameNumber(pictureData.getPictureType()), cx, cy);
+
+          DocxHandler.clonePicture(source, clone, source.getEmbeddedPictures().indexOf(pic));
+
+//        } catch (IOException e1) {
+//          e1.printStackTrace();
         } catch (InvalidFormatException e1) {
           e1.printStackTrace();
+        } catch (IOException e) {
+          e.printStackTrace();
+        }
+      }
+
+      for (XWPFPicture sPic : source.getEmbeddedPictures()) {
+        for (XWPFPicture cPic : clone.getEmbeddedPictures()) {
+          if (cPic.getPictureData().getChecksum().equals(sPic.getPictureData().getChecksum())) {
+            cPic.getCTPicture().set(sPic.getCTPicture());
+          }
         }
       }
     }
@@ -221,6 +346,10 @@ public class DocumentInsertStrategy implements InsertStrategy {
   }
 
   private void cloneTable(XWPFTable clone, XWPFTable source) {
+    if (clone == null || source == null) {
+      return;
+    }
+
     CTTblPr tblPr = clone.getCTTbl().addNewTblPr();
     tblPr.set(source.getCTTbl().getTblPr());
 
@@ -236,7 +365,11 @@ public class DocumentInsertStrategy implements InsertStrategy {
     }
   }
 
-  private void cloneRow(XWPFTableRow clone, XWPFTableRow source) {
+  private void  cloneRow(XWPFTableRow clone, XWPFTableRow source) {
+    if (clone == null || source == null) {
+      return;
+    }
+
     CTRow ctRow = clone.getCtRow();
     ctRow.set(source.getCtRow());
   }
@@ -271,5 +404,47 @@ public class DocumentInsertStrategy implements InsertStrategy {
     for (XWPFStyle xwpfStyle : usedStyleList) {
       destDoc.getStyles().addStyle(xwpfStyle);
     }
+  }
+
+  // Copy Numbering of Table and Paragraph.
+  private static void copyNumbering(String prefix, XWPFDocument srcDoc, XWPFDocument destDoc)
+  {
+    if (destDoc == null || srcDoc == null)
+      return;
+
+    if (destDoc.getNumbering() == null) {
+      destDoc.createNumbering();
+    }
+
+    String sanitizedPrefix = StringUtils.trimToEmpty(prefix);
+
+    sanitizedPrefix = sanitizedPrefix.isEmpty() ? "" : sanitizedPrefix + " ";
+
+    Map<BigInteger, XWPFNum> mapNumberings = getNums(srcDoc);
+
+    for (Map.Entry<BigInteger, XWPFNum> entry : mapNumberings.entrySet()) {
+      XWPFNum num = entry.getValue();
+      XWPFAbstractNum abstractNum = srcDoc.getNumbering().getAbstractNum(num.getCTNum().getAbstractNumId().getVal());
+      BigInteger newNumId =  destDoc.getNumbering().addNum(num);
+      XWPFNum newNum = destDoc.getNumbering().getNum(newNumId);
+      XWPFAbstractNum newAbstractNum = destDoc.getNumbering().getAbstractNum(num.getCTNum().getAbstractNumId().getVal());
+
+//      .getCTNum().getLvlOverrideArray(0).getLvl().getPStyle().setVal(sanitizedPrefix + " " + newNum.getCTNum().getLvlOverrideArray(0).getLvl().getPStyle().getVal());
+    }
+
+  }
+
+  private static Map<BigInteger, XWPFNum> getNums(XWPFDocument doc) {
+
+    Map<BigInteger, XWPFNum> styles = Maps.newHashMap();
+    XWPFNumbering numbering = doc.getNumbering();
+
+    for (XWPFNum num : NumberingUtil.getNums(numbering)) {
+      if (num != null) {
+        styles.put(num.getCTNum().getNumId(), num);
+      }
+    }
+
+    return styles;
   }
 }
