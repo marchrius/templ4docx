@@ -120,21 +120,21 @@ public class DocumentCleaner {
                 i = notRecognizedVariableStartIndex;
               } else {
                 // Set found variable to start run
-                String textFromStartRun = startRun.getText(0);
-                textFromStartRun = StringUtils.replace(textFromStartRun, notRecognizedPrefix,
-                    notRecognizedVariable);
-                startRun.setText(textFromStartRun, 0);
+//                String textFromStartRun = startRun.getText(0);
+//                textFromStartRun = StringUtils.replace(textFromStartRun, notRecognizedPrefix,
+//                    notRecognizedVariable);
+//                startRun.setText(textFromStartRun, 0);
 
                 // clean runs between start and end variable pattern
-                for (int j = 0; j <= i; j++) {
+//                for (int j = 0; j <= i; j++) {
 //                  parent.removeRun(parent.getRuns().indexOf(runs.get(j)));
-                  parent.removeRun(0);
-                }
+//                  parent.removeRun(0);
+//                }
 
 //                text = notRecognizedVariable;
 //                Integer suffixIndex = suffixIndexesOf.get(0);
 //                runs.get(i).setText(text.substring(suffixIndex + 1), 0);
-                i = notRecognizedVariableStartIndex;
+//                i = notRecognizedVariableStartIndex;
               }
 
               notRecognizedVariableStartIndex = -1;

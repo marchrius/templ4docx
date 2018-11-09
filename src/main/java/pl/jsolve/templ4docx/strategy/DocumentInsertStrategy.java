@@ -384,6 +384,10 @@ public class DocumentInsertStrategy implements InsertStrategy {
         run.setText(text, 0);
       }
     }
+    if (DocxHandler.isEmptyParagraph(paragraph, true)) {
+      paragraphCleaner.add(new DocumentInsert(insert.getKey(), paragraph, insert.getCellParent(), insert.getDocumentParent(), insert.isInAList()));
+//      paragraph.getDocument().removeBodyElement(paragraph.getDocument().getPosOfParagraph(paragraph));
+    }
   }
 
   // Copy Styles of Table and Paragraph.
@@ -447,7 +451,7 @@ public class DocumentInsertStrategy implements InsertStrategy {
   public void cleanParagraphs() {
     for (ParagraphInsert paragraph : paragraphCleaner.getParagraphs()) {
       try {
-        paragraph.deleteMe();
+//        paragraph.deleteMe();
       } catch (Exception ex) {
         // do nothing, row doesn't exist
       }
