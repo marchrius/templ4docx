@@ -8,6 +8,7 @@ import java.util.regex.Pattern;
 import org.apache.commons.lang3.StringUtils;
 
 import pl.jsolve.templ4docx.core.VariablePattern;
+import pl.jsolve.templ4docx.variable.Variables;
 
 /**
  * Utility class which returns list of variables found in text content of template .docx file

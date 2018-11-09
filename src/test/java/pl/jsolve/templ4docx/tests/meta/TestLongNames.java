@@ -38,9 +38,7 @@ public class TestLongNames extends AbstractMetaTest {
 
         docx.fillTemplate(var);
 
-        String tmpPath = System.getProperty("java.io.tmpdir");
-        String processedPath = String.format("%s%s%s", tmpPath, File.separator,
-                templateFileName + "-processed" + ".docx");
+        String processedPath = getRelative("long-names-processed" + ".docx");
 
         docx.save(processedPath);
 
@@ -62,8 +60,7 @@ public class TestLongNames extends AbstractMetaTest {
 
         docx.fillTemplate(var);
 
-        String processedPath2 = String.format("%s%s%s", tmpPath, File.separator,
-                templateFileName + "-processed2" + ".docx");
+        String processedPath2 = getRelative("long-names-processed2" + ".docx");
 
         docx.save(processedPath2);
 

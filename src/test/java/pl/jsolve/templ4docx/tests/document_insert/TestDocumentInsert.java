@@ -16,76 +16,76 @@ import static org.junit.Assert.assertEquals;
 
 /**
  * @author indvd00m (gotoindvdum[at]gmail[dot]com)
- *
  */
 public class TestDocumentInsert extends AbstractDocumentInsertTest {
 
-    @Test
-    public void test() throws IOException {
-        String documentFileName = "document-insert/document-template";
-        InputStream is = getClass().getClassLoader().getResourceAsStream(documentFileName + ".docx");
+  @Test
+  public void test() throws IOException {
+    String documentFileName = "document-insert/document-template";
+    InputStream is = getClass().getClassLoader().getResourceAsStream(documentFileName + ".docx");
 
-        String subDocumentFileName = "document-insert/long-names";
-        InputStream subIs = getClass().getClassLoader().getResourceAsStream(subDocumentFileName + ".docx");
+    String subDocumentFileName = "document-insert/long-names";
+    InputStream subIs = getClass().getClassLoader()
+        .getResourceAsStream(subDocumentFileName + ".docx");
 
-        Docx docx = new Docx(is);
-        is.close();
+    Docx docx = new Docx(is);
+    is.close();
 
-        Docx subDocx = new Docx(subIs);
-        subIs.close();
+    Docx subDocx = new Docx(subIs);
+    subIs.close();
 
-        docx.setVariablePattern(new VariablePattern("#{", "}"));
+    docx.setVariablePattern(new VariablePattern("#{", "}"));
 
-        Variables var = new Variables();
+    Variables var = new Variables();
 
-        var.addDocumentVariable(new DocumentVariable("#{document.1}", subDocx.getXWPFDocument()));
+    var.addDocumentVariable("#{document.1}", subDocx);
 
-        var.addDocumentVariable(new DocumentVariable("#{document.2}", subDocx.getXWPFDocument()));
+    var.addDocumentVariable("#{document.2}", subDocx);
 
-        var.addDocumentVariable(new DocumentVariable("#{document.3}", subDocx.getXWPFDocument()));
+    var.addDocumentVariable("#{document.3}", subDocx);
 
-        var.addTextVariable(new TextVariable("#{cost}", "1234.56"));
+    var.addTextVariable(new TextVariable("#{cost}", "1234.56"));
 
-        var.addTextVariable(new TextVariable("#{form.bankIBAN}", "1234.56"));
+    var.addTextVariable("#{variableWithVeryVeryLongName01}", "Short");
 
-        List<String> placeholders = docx.findVariables();
+    var.addTextVariable("#{variableWithVeryVeryVeryVeryVeryVeryLongName02}", "Medium");
 
-        docx.fillTemplate(var);
+    var.addTextVariable("#{variableWithVeryVeryVeryVeryVeryVeryVeryVeryVeryVeryVeryVeryLongName03}",
+        "Long");
 
-        String tmpPath = System.getProperty("user.dir");
+    var.addTextVariable(new TextVariable("#{form.bankIBAN}", "1234.56"));
 
-        String processedPath = String.format("%s%s%s", tmpPath, File.separator, documentFileName + "-processed" + ".docx");
+    var.addTextVariable("#{var01}", "Oh");
+    var.addTextVariable("#{var02}", "Welcome");
+    var.addTextVariable("#{var03}", "Guest");
 
-        File parentFile = new File(processedPath);
-        parentFile = parentFile.getParentFile();
+    List<String> placeholders = docx.findVariables();
 
-        if (!parentFile.exists()) {
-            parentFile.mkdirs();
-        }
+    docx.fillTemplate(var);
 
-        System.out.println(processedPath);
+    String processedPath = getRelative("document-template-processed.docx");
 
-        docx.save(processedPath);
+    System.out.println(processedPath);
 
-        String text = docx.readTextContent();
+    docx.save(processedPath);
 
-        System.out.println(text);
+    String text = docx.readTextContent();
 
-        assertEquals("This is test simple template with three variables: #{var01}, #{var02}, #{var03}.\n" +
-                "\n" +
-                "This is test simple template with three variables with long names: ${variableWithVeryVeryLongName01}, ${variableWithVeryVeryVeryVeryVeryVeryLongName02}, ${variableWithVeryVeryVeryVeryVeryVeryVeryVeryVeryVeryVeryVeryLongName03}.\n" +
-                "\n" +
-                "\n" +
-                "This is test simple template with three variables with long names: ${variableWithVeryVeryLongName01}, ${variableWithVeryVeryVeryVeryVeryVeryLongName02}, ${variableWithVeryVeryVeryVeryVeryVeryVeryVeryVeryVeryVeryVeryLongName03}.\n" +
-                "\n" +
-                "\n" +
-                "This is test simple template with three variables with long names: ${variableWithVeryVeryLongName01}, ${variableWithVeryVeryVeryVeryVeryVeryLongName02}, ${variableWithVeryVeryVeryVeryVeryVeryVeryVeryVeryVeryVeryVeryLongName03}.\n" +
-                "\n" +
-                "\n" +
-                "This document will cost you $ 1234.56\n" +
-                "\n" +
-                "IBAN / Account #:  1234.56",
-                text.trim());
-    }
+    System.out.println(text);
+
+    assertEquals(
+        "This is test simple template with three variables: Oh, Welcome, Guest.\n"
+            + "\n"
+            + "This is test simple template with three variables with long names: Short, Medium, Long.\n"
+            + "\n"
+            + "This is test simple template with three variables with long names: Short, Medium, Long.\n"
+            + "\n"
+            + "This is test simple template with three variables with long names: Short, Medium, Long.\n"
+            + "\n"
+            + "This document will cost you $ 1234.56\n"
+            + "\n"
+            + "IBAN / Account #:  1234.56",
+        text.trim());
+  }
 
 }

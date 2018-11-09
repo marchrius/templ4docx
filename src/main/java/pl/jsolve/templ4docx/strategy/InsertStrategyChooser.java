@@ -22,7 +22,7 @@ public class InsertStrategyChooser {
         this.tableInsertStrategy = new TableInsertStrategy(this, tableRowCleaner);
         this.bulletListInsertStrategy = new BulletListInsertStrategy(this, paragraphCleaner);
         this.objectInsertStrategy = new ObjectInsertStrategy();
-        this.documentInsertStrategy = new DocumentInsertStrategy();
+        this.documentInsertStrategy = new DocumentInsertStrategy(paragraphCleaner);
         this.variables = variables;
     }
 
@@ -56,5 +56,6 @@ public class InsertStrategyChooser {
     public void cleanUp() {
         tableInsertStrategy.cleanRows();
         bulletListInsertStrategy.cleanParagraphs();
+        documentInsertStrategy.cleanParagraphs();
     }
 }
