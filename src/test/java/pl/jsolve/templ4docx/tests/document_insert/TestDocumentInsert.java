@@ -82,12 +82,9 @@ public class TestDocumentInsert extends AbstractDocumentInsertTest {
     assertEquals(
         "This is test simple template with three variables with long names: Short, Medium, Long.\n"
             + "\n"
-            + "\n"
             + "This is test simple template with three variables with long names: Short, Medium, Long.\n"
             + "\n"
-            + "\n"
             + "This is test simple template with three variables with long names: Short, Medium, Long.\n"
-            + "\n"
             + "\n"
             + "This document will cost you $ 1234.56\n"
             + "\n"
