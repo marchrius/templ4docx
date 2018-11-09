@@ -1,9 +1,10 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>pl.jsolve</groupId>
 	<artifactId>templ4docx</artifactId>
-	<version>2.0.5-SNAPSHOT</version>
+  <version>${project.version}</version>
 	<name>templ4docx</name>
 	<description>TEMPL4DOCX - Utility library for filling templates in docx files</description>
 	<url>https://github.com/jsolve/templ4docx</url>
@@ -32,6 +33,7 @@
 	</scm>
 
 	<properties>
+    <project.version>2.0.7-SNAPSHOT</project.version>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<poi.version>4.0.0</poi.version>
 		<poi.ooxml.version>${poi.version}</poi.ooxml.version>
@@ -49,16 +51,19 @@
 			<artifactId>poi</artifactId>
 			<version>${poi.version}</version>
 		</dependency>
+
 		<dependency>
 			<groupId>org.apache.poi</groupId>
 			<artifactId>poi-ooxml</artifactId>
 			<version>${poi.version}</version>
 		</dependency>
+
 		<dependency>
 			<groupId>org.apache.poi</groupId>
 			<artifactId>poi-scratchpad</artifactId>
 			<version>${poi.version}</version>
 		</dependency>
+
 		<dependency>
 			<groupId>org.apache.poi</groupId>
 			<artifactId>ooxml-schemas</artifactId>
@@ -78,15 +83,11 @@
 		</dependency>
 
 		<dependency>
-			<groupId>junit</groupId>
-			<artifactId>junit</artifactId>
-			<version>4.12</version>
-		</dependency>
-		<dependency>
 			<groupId>org.easytesting</groupId>
 			<artifactId>fest-assert</artifactId>
 			<version>1.4</version>
 		</dependency>
+
 		<dependency>
 			<groupId>commons-io</groupId>
 			<artifactId>commons-io</artifactId>
@@ -257,9 +258,9 @@
             <id>marchrius</id>
             <name>Matteo Gaggiano</name>
             <email>m.gaggiano@lunaflpartner.it</email>
-            <url>http://marchrius.org</url>
+      <url>https://marchrius.org</url>
             <organization>Luna Partner</organization>
-            <organizationUrl>http://lunalaprtner.it</organizationUrl>
+      <organizationUrl>https://lunalaprtner.it</organizationUrl>
             <roles>
                 <role>developer</role>
             </roles>
