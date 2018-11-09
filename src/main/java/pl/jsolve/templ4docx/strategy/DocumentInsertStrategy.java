@@ -1,19 +1,14 @@
 package pl.jsolve.templ4docx.strategy;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-
 import java.util.Map;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
-import org.apache.poi.util.Units;
 import org.apache.poi.xwpf.usermodel.BodyElementType;
-import org.apache.poi.xwpf.usermodel.Document;
 import org.apache.poi.xwpf.usermodel.IBodyElement;
 import org.apache.poi.xwpf.usermodel.NumberingUtil;
 import org.apache.poi.xwpf.usermodel.XWPFAbstractNum;
@@ -22,32 +17,33 @@ import org.apache.poi.xwpf.usermodel.XWPFNum;
 import org.apache.poi.xwpf.usermodel.XWPFNumbering;
 import org.apache.poi.xwpf.usermodel.XWPFParagraph;
 import org.apache.poi.xwpf.usermodel.XWPFPicture;
-import org.apache.poi.xwpf.usermodel.XWPFPictureData;
 import org.apache.poi.xwpf.usermodel.XWPFRun;
 import org.apache.poi.xwpf.usermodel.XWPFStyle;
 import org.apache.poi.xwpf.usermodel.XWPFTable;
 import org.apache.poi.xwpf.usermodel.XWPFTableRow;
 import org.apache.xmlbeans.XmlCursor;
-import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTAbstractNum;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTDecimalNumber;
-import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTDrawing;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTNumPr;
-import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTOnOff;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTPPr;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTRPr;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTRow;
-import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTString;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTTblPr;
-
-import org.openxmlformats.schemas.wordprocessingml.x2006.main.STOnOff;
 import pl.jsolve.sweetener.collection.Maps;
+import pl.jsolve.templ4docx.cleaner.ParagraphCleaner;
 import pl.jsolve.templ4docx.insert.DocumentInsert;
 import pl.jsolve.templ4docx.insert.Insert;
+import pl.jsolve.templ4docx.insert.ParagraphInsert;
 import pl.jsolve.templ4docx.utils.DocxHandler;
 import pl.jsolve.templ4docx.variable.DocumentVariable;
 import pl.jsolve.templ4docx.variable.Variable;
 
 public class DocumentInsertStrategy implements InsertStrategy {
+
+  private ParagraphCleaner paragraphCleaner;
+
+  public DocumentInsertStrategy(ParagraphCleaner paragraphCleaner) {
+    this.paragraphCleaner = paragraphCleaner;
+  }
 
   @Override
   public void insert(Insert insert, Variable variable) {
@@ -85,15 +81,15 @@ public class DocumentInsertStrategy implements InsertStrategy {
       }
     }
 
-    if (nextParagraph == null && prevParagraph == null) {
-      System.out.println("Paragraph is first and last");
-    } else if (nextParagraph == null) {
-      System.out.println("Paragraph is last");
-    } else if (prevParagraph == null) {
-      System.out.println("Paragraph is first");
-    } else {
-      System.out.println("Paragraph is contained");
-    }
+//    if (nextParagraph == null && prevParagraph == null) {
+//      System.out.println("Paragraph is first and last");
+//    } else if (nextParagraph == null) {
+//      System.out.println("Paragraph is last");
+//    } else if (prevParagraph == null) {
+//      System.out.println("Paragraph is first");
+//    } else {
+//      System.out.println("Paragraph is contained");
+//    }
 
 //		List<IBodyElement> bodyElements = getReverseListOfBodyElements(documentVariable.getDocument());
 
@@ -446,5 +442,15 @@ public class DocumentInsertStrategy implements InsertStrategy {
     }
 
     return styles;
+  }
+
+  public void cleanParagraphs() {
+    for (ParagraphInsert paragraph : paragraphCleaner.getParagraphs()) {
+      try {
+        paragraph.deleteMe();
+      } catch (Exception ex) {
+        // do nothing, row doesn't exist
+      }
+    }
   }
 }
