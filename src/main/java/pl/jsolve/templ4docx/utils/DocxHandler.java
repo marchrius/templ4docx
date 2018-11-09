@@ -1,6 +1,7 @@
 package pl.jsolve.templ4docx.utils;
 
 import static org.apache.poi.ooxml.POIXMLTypeLoader.DEFAULT_XML_OPTIONS;
+import static org.apache.xmlbeans.impl.xb.xmlschema.SpaceAttribute.Space;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -45,6 +46,7 @@ import org.openxmlformats.schemas.drawingml.x2006.picture.CTPicture;
 import org.openxmlformats.schemas.drawingml.x2006.picture.CTPictureNonVisual;
 import org.openxmlformats.schemas.drawingml.x2006.wordprocessingDrawing.CTAnchor;
 import org.openxmlformats.schemas.drawingml.x2006.wordprocessingDrawing.CTInline;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTText;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTDrawing;
 import pl.jsolve.sweetener.collection.Maps;
 
@@ -454,4 +456,20 @@ public class DocxHandler {
       return pics;
     }
 
+  public static boolean isEmptyParagraph(XWPFParagraph paragraph, boolean b) {
+    if (paragraph.isEmpty()) return true;
+
+    for (XWPFRun run : paragraph.getRuns()) {
+      if (run.getEmbeddedPictures() != null && run.getEmbeddedPictures().size() > 0) {
+        return false;
+      }
+      for (int i = 0, len = run.getCTR().sizeOfTArray(); i < len; i++) {
+        CTText text = run.getCTR().getTArray(i);
+        if (text.getSpace().equals(Space.PRESERVE) || !text.getStringValue().isEmpty()) {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
 }
