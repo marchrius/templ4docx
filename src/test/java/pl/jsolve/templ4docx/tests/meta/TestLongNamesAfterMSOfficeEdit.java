@@ -46,9 +46,7 @@ public class TestLongNamesAfterMSOfficeEdit extends AbstractMetaTest {
 
         docx.fillTemplate(var);
 
-        String tmpPath = System.getProperty("java.io.tmpdir");
-        String processedPath = String.format("%s%s%s", tmpPath, File.separator,
-                templateFileName + "-processed" + ".docx");
+        String processedPath = getRelative("long-names-processed-edited-in-ms-office-processed" + ".docx");
 
         docx.save(processedPath);
 

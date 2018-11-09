@@ -38,9 +38,7 @@ public class TestObjectTemplate extends AbstractVariableObjectTest {
 
         docx.fillTemplate(var);
 
-        String tmpPath = System.getProperty("java.io.tmpdir");
-        String processedPath = String.format("%s%s%s", tmpPath, File.separator,
-                templateFileName + "-processed" + ".docx");
+        String processedPath = getRelative("object-template-processed" + ".docx");
 
         docx.save(processedPath);
 

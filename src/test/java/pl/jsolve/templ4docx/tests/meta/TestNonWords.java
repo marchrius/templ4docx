@@ -35,9 +35,7 @@ public class TestNonWords extends AbstractMetaTest {
 
         docx.fillTemplate(var);
 
-        String tmpPath = System.getProperty("java.io.tmpdir");
-        String processedPath = String.format("%s%s%s", tmpPath, File.separator,
-                templateFileName + "-processed" + ".docx");
+        String processedPath = getRelative("non-words-processed" + ".docx");
 
         docx.save(processedPath);
 
@@ -59,8 +57,7 @@ public class TestNonWords extends AbstractMetaTest {
 
         docx.fillTemplate(var);
 
-        String processedPath2 = String.format("%s%s%s", tmpPath, File.separator,
-                templateFileName + "-processed2" + ".docx");
+        String processedPath2 = getRelative("non-words-processed2" + ".docx");
 
         docx.save(processedPath2);
 

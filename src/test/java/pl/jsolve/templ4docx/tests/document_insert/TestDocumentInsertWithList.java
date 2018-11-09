@@ -68,12 +68,13 @@ public class TestDocumentInsertWithList extends AbstractDocumentInsertTest {
     bulletsList.add(new TextVariable("#{list}", "Testo 5"));
 
     var.addBulletListVariable("#{list}", bulletsList);
+    var.addBulletListVariable("#{this_will_be_removed:document}", Collections.<Variable>emptyList());
 
     List<String> placeholders = docx.findVariables();
 
     docx.fillTemplate(var);
 
-    String processedPath = getRelative((new Date()).getTime() + "-processed" + ".docx");
+    String processedPath = getRelative("document-insert-with-list-processed" + ".docx");
 
     System.out.println(processedPath);
 
@@ -103,7 +104,6 @@ public class TestDocumentInsertWithList extends AbstractDocumentInsertTest {
                 + "Level 5\n"
                 + "Level 5.1\n"
                 + "Level 5.1.1\n"
-                + "\n"
                 + "nullSimple text. Bold text. Italic text. Strike text. Red text. Glowing text. Text withnullcarriage return. This text will be inserted into a numerating list with an image\n"
                 + "The sun shines as it has never shone. This sentence is wrong, can you tell me why?\n"
                 + "Level 5.1.3\n"

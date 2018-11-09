@@ -42,9 +42,7 @@ public class TestEmptyMetaAfterMSOfficeEdit extends AbstractMetaTest {
 
         docx.fillTemplate(var);
 
-        String tmpPath = System.getProperty("java.io.tmpdir");
-        String processedPath = String.format("%s%s%s", tmpPath, File.separator,
-                templateFileName + "-processed" + ".docx");
+        String processedPath = getRelative("empty-meta-edited-in-ms-office-processed" + ".docx");
 
         docx.save(processedPath);
 

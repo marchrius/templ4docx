@@ -8,14 +8,15 @@ public class AbstractTest {
 
   protected Logger logger = Logger.getLogger(AbstractTest.class.getSimpleName());
 
-  private String tmpDir = null;
+  protected String tmpDir = null;
+
   private String instanceTempDirectory = null;
   private String testPath = null;
 
   public void createTmpDirectory() {
-    this.tmpDir = System.getProperty("java.io.tmpdir");
+    this.tmpDir = tmpDir == null ? System.getProperty("java.io.tmpdir") : tmpDir;
     this.tmpDir = this.tmpDir.charAt(this.tmpDir.length() - 1) == File.separatorChar ? this.tmpDir.substring(0, this.tmpDir.length() - 1) : this.tmpDir;
-    this.instanceTempDirectory = String.format("%s%s", getTmpDir(), getTestPath());
+    this.instanceTempDirectory = String.format("%s%s%s%s", tmpDir, File.separator, "templ4docx-tests", getTestPath());
     File testDir = new File(this.instanceTempDirectory);
     if (!testDir.exists()) {
       if (!testDir.mkdirs()) {

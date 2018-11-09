@@ -38,11 +38,11 @@ public class TestDocumentInsert extends AbstractDocumentInsertTest {
 
     Variables var = new Variables();
 
-    var.addDocumentVariable(new DocumentVariable("#{document.1}", subDocx.getXWPFDocument()));
+    var.addDocumentVariable("#{document.1}", subDocx);
 
-    var.addDocumentVariable(new DocumentVariable("#{document.2}", subDocx.getXWPFDocument()));
+    var.addDocumentVariable("#{document.2}", subDocx);
 
-    var.addDocumentVariable(new DocumentVariable("#{document.3}", subDocx.getXWPFDocument()));
+    var.addDocumentVariable("#{document.3}", subDocx);
 
     var.addTextVariable(new TextVariable("#{cost}", "1234.56"));
 
@@ -55,21 +55,15 @@ public class TestDocumentInsert extends AbstractDocumentInsertTest {
 
     var.addTextVariable(new TextVariable("#{form.bankIBAN}", "1234.56"));
 
+    var.addTextVariable("#{var01}", "Oh");
+    var.addTextVariable("#{var02}", "Welcome");
+    var.addTextVariable("#{var03}", "Guest");
+
     List<String> placeholders = docx.findVariables();
 
     docx.fillTemplate(var);
 
-    String tmpPath = System.getProperty("user.dir");
-
-    String processedPath = String
-        .format("%s%s%s", tmpPath, File.separator, documentFileName + "-processed" + ".docx");
-
-    File parentFile = new File(processedPath);
-    parentFile = parentFile.getParentFile();
-
-    if (!parentFile.exists()) {
-      parentFile.mkdirs();
-    }
+    String processedPath = getRelative("document-template-processed.docx");
 
     System.out.println(processedPath);
 
@@ -80,7 +74,9 @@ public class TestDocumentInsert extends AbstractDocumentInsertTest {
     System.out.println(text);
 
     assertEquals(
-        "This is test simple template with three variables with long names: Short, Medium, Long.\n"
+        "This is test simple template with three variables: Oh, Welcome, Guest.\n"
+            + "\n"
+            + "This is test simple template with three variables with long names: Short, Medium, Long.\n"
             + "\n"
             + "This is test simple template with three variables with long names: Short, Medium, Long.\n"
             + "\n"
