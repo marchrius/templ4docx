@@ -1,5 +1,6 @@
 package pl.jsolve.templ4docx.cleaner;
 
+import java.util.LinkedList;
 import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
@@ -40,12 +41,17 @@ public class DocumentCleaner {
    */
   public void clean(Docx docx, Variables variables, VariablePattern variablePattern) {
     List<Key> keys = keyExtractor.extractKeys(variables);
+    List<XWPFParagraph> paragraphsToRemove = new LinkedList<XWPFParagraph>();
     for (XWPFParagraph paragraph : docx.getXWPFDocument().getParagraphs()) {
       clean(paragraph.getRuns(), keys, variablePattern);
       if (paragraph.isEmpty()) {
-        docx.getXWPFDocument()
-            .removeBodyElement(docx.getXWPFDocument().getParagraphs().indexOf(paragraph));
+        paragraphsToRemove.add(paragraph);
       }
+    }
+
+    for (XWPFParagraph paragraph : paragraphsToRemove) {
+      docx.getXWPFDocument()
+          .removeBodyElement(docx.getXWPFDocument().getParagraphs().indexOf(paragraph));
     }
 
     cleanTables(docx.getXWPFDocument().getTables(), keys, variablePattern);
