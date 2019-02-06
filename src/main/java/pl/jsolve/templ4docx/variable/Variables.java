@@ -86,7 +86,15 @@ public class Variables {
   }
 
   public DocumentVariable addDocumentVariable(String key, XWPFDocument document) {
-    DocumentVariable documentVariable = new DocumentVariable(key, document);
+    return addDocumentVariable(key, document, true);
+  }
+
+  public DocumentVariable addDocumentVariable(String key, Docx document, boolean asUniqueParagraph) {
+    return addDocumentVariable(key, document.getXWPFDocument(), asUniqueParagraph);
+  }
+
+  public DocumentVariable addDocumentVariable(String key, XWPFDocument document, boolean asUniqueParagraph) {
+    DocumentVariable documentVariable = new DocumentVariable(key, document, asUniqueParagraph);
     return add(documentVariable);
   }
 
