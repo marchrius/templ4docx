@@ -33,7 +33,7 @@
   </scm>
 
   <properties>
-    <project.version>2.0.9-SNAPSHOT</project.version>
+    <project.version>2.0.10-SNAPSHOT</project.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <poi.version>4.0.0</poi.version>
     <poi.ooxml.version>${poi.version}</poi.ooxml.version>
