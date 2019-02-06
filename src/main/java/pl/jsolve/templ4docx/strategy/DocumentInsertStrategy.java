@@ -126,7 +126,7 @@ public class DocumentInsertStrategy implements InsertStrategy {
           firstParagraph = newParagraph;
           // move cursor to next for the next insertNewParagraph
           templateCursor = newParagraph.getCTP().newCursor();
-        } else if (insert.isInAList() || firstParagraph.getNumID() != null) {
+        } else if (variable.isAsUniqueParagraph() || insert.isInAList() || firstParagraph.getNumID() != null) {
           newParagraph = firstParagraph;
           XWPFRun run = firstParagraph.createRun();
           run.addBreak();

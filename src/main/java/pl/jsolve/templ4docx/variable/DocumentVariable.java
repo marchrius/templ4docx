@@ -7,15 +7,26 @@ public class DocumentVariable implements Variable {
 
   private final String key;
   private final XWPFDocument document;
+  private final boolean asUniqueParagraph;
 
-  public DocumentVariable(String key, Docx document) {
+  public DocumentVariable(String key, Docx document, boolean asUniqueParagraph) {
     this.key = key;
     this.document = document.getXWPFDocument();
+    this.asUniqueParagraph = asUniqueParagraph;
+  }
+
+  public DocumentVariable(String key, Docx document) {
+    this(key, document, true);
+  }
+
+  public DocumentVariable(String key, XWPFDocument document, boolean asUniqueParagraph) {
+    this.key = key;
+    this.document = document;
+    this.asUniqueParagraph = asUniqueParagraph;
   }
 
   public DocumentVariable(String key, XWPFDocument document) {
-    this.key = key;
-    this.document = document;
+    this(key, document, true);
   }
 
   public String getKey() {
@@ -26,4 +37,7 @@ public class DocumentVariable implements Variable {
     return document;
   }
 
+  public boolean isAsUniqueParagraph() {
+    return asUniqueParagraph;
+  }
 }
