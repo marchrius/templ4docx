@@ -28,6 +28,7 @@ public class TestDocumentInsertWithList extends AbstractDocumentInsertTest {
     InputStream is = loadDocx("document-insert/document-template-with-list");
     InputStream subAIs = loadDocx("document-insert/document-template-list-item-a");
     InputStream subBIs = loadDocx("document-insert/document-template-list-item-b");
+    InputStream subCIs = loadDocx("document-insert/document-template-document-with-paragraph");
 
     logger.info("Starting...");
     Docx docx = new Docx(is);
@@ -38,6 +39,9 @@ public class TestDocumentInsertWithList extends AbstractDocumentInsertTest {
 
     Docx subBDocx = new Docx(subBIs);
     subBIs.close();
+
+    Docx subCDocx = new Docx(subCIs);
+    subCIs.close();
 
     /* Configuration */
     docx.setVariablePattern(new VariablePattern("#{", "}"));
@@ -69,6 +73,15 @@ public class TestDocumentInsertWithList extends AbstractDocumentInsertTest {
 
     var.addBulletListVariable("#{list}", bulletsList);
     var.addBulletListVariable("#{this_will_be_removed:document}", Collections.<Variable>emptyList());
+
+    List<Variable> paragraphAsUnique = new ArrayList<Variable>();
+    List<Variable> paragraphAsNotUnique = new ArrayList<Variable>();
+
+    paragraphAsUnique.add(new DocumentVariable("#{list:asunique}", subCDocx, true));
+    paragraphAsNotUnique.add(new DocumentVariable("#{list:asnotunique}", subCDocx, false));
+
+    var.addBulletListVariable("#{list:asunique}", paragraphAsUnique);
+    var.addBulletListVariable("#{list:asnotunique}", paragraphAsNotUnique);
 
     List<String> placeholders = docx.findVariables();
 
@@ -118,6 +131,10 @@ public class TestDocumentInsertWithList extends AbstractDocumentInsertTest {
                 + "nullSimple text. Bold text. Italic text. Strike text. Red text. Glowing text. Text withnullcarriage return. This text will be inserted into a numerating list with an image\n"
                 + "The sun shines as it has never shone. This sentence is wrong, can you tell me why?\n"
                 + "This is test simple template with three variables with long names but with short values: Ciao, Mondo, " + sdf.format(date) + ".\n"
+                + "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque vulputate ultricies felis, a euismod leo suscipit eget\n"
+                + "Quisque maximus dictum interdum. Nulla facilisi. Suspendisse gravida est sed auctor ullamcorper.\n"
+                + "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque vulputate ultricies felis, a euismod leo suscipit eget\n"
+                + "Quisque maximus dictum interdum. Nulla facilisi. Suspendisse gravida est sed auctor ullamcorper.\n"
                 + "\n"
                 + "Here we have the document-a\n"
                 + "nullSimple text. Bold text. Italic text. Strike text. Red text. Glowing text. Text withnullcarriage return. This text will be inserted into a numerating list with an image\n"
