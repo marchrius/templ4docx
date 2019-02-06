@@ -126,7 +126,7 @@ public class DocumentInsertStrategy implements InsertStrategy {
           firstParagraph = newParagraph;
           // move cursor to next for the next insertNewParagraph
           templateCursor = newParagraph.getCTP().newCursor();
-        } else if (variable.isAsUniqueParagraph() || insert.isInAList() || firstParagraph.getNumID() != null) {
+        } else if (variable.isAsUniqueParagraph() && (insert.isInAList() || firstParagraph.getNumID() != null)) {
           newParagraph = firstParagraph;
           XWPFRun run = firstParagraph.createRun();
           run.addBreak();
@@ -146,11 +146,16 @@ public class DocumentInsertStrategy implements InsertStrategy {
         }
 
         // if is first insertion, copy the numerating properties from paragraph, if any
-        if (newParagraph == firstParagraph && (insert.isInAList() || newParagraph.getNumID() != null)) {
+        if ((newParagraph == firstParagraph && (insert.isInAList() || newParagraph.getNumID() != null)) ||
+            !variable.isAsUniqueParagraph() && (insert.isInAList() || newParagraph.getNumID() != null)) {
           clearParagraphNum(newParagraph);
           cloneParagraphNum(newParagraph, prevParagraph, nextParagraph);
 //        } else {
 //          clearParagraphNum(newParagraph);
+        }
+
+        if (newParagraph != firstParagraph || !variable.isAsUniqueParagraph()) {
+          prevParagraph = newParagraph;
         }
 
       } else if (bodyElementType.equals(BodyElementType.TABLE)) {
