@@ -26,6 +26,7 @@ import org.apache.poi.xwpf.usermodel.XWPFParagraph;
 import org.apache.poi.xwpf.usermodel.XWPFPicture;
 import org.apache.poi.xwpf.usermodel.XWPFPictureData;
 import org.apache.poi.xwpf.usermodel.XWPFRun;
+import org.apache.poi.xwpf.usermodel.XWPFStyle;
 import org.apache.xmlbeans.XmlException;
 import org.apache.xmlbeans.XmlObject;
 import org.apache.xmlbeans.XmlToken;
@@ -46,6 +47,8 @@ import org.openxmlformats.schemas.drawingml.x2006.picture.CTPicture;
 import org.openxmlformats.schemas.drawingml.x2006.picture.CTPictureNonVisual;
 import org.openxmlformats.schemas.drawingml.x2006.wordprocessingDrawing.CTAnchor;
 import org.openxmlformats.schemas.drawingml.x2006.wordprocessingDrawing.CTInline;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTPPr;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTRPr;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTText;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTDrawing;
 import pl.jsolve.sweetener.collection.Maps;
@@ -471,5 +474,110 @@ public class DocxHandler {
       }
     }
     return true;
+  }
+
+  public static XWPFParagraph cloneParagraph(XWPFParagraph clone, XWPFParagraph contentSource, XWPFParagraph propertiesSource) {
+    if (clone == null || contentSource == null) {
+      return null;
+    }
+
+    if (propertiesSource != null) {
+      CTPPr pPr = clone.getCTP().isSetPPr() ? clone.getCTP().getPPr() : clone.getCTP().addNewPPr();
+      pPr.set(propertiesSource.getCTP().getPPr());
+    }
+
+    for (XWPFRun r : contentSource.getRuns()) {
+      XWPFRun newRun = clone.createRun();
+      cloneRun(newRun, r, r);
+    }
+
+    return clone;
+  }
+
+  public static XWPFRun cloneRun(XWPFRun clone, XWPFRun contentSource, XWPFRun propertiesSource) {
+    if (clone == null || contentSource == null) {
+      return null;
+    }
+
+    if (propertiesSource != null) {
+      CTRPr rPr = clone.getCTR().isSetRPr() ? clone.getCTR().getRPr() : clone.getCTR().addNewRPr();
+      rPr.set(propertiesSource.getCTR().getRPr());
+    }
+
+    clone.setText(contentSource.getText(0));
+
+    // Checking for image duplication
+    boolean hasImages = false;
+
+    // Extract image from source docx file and insert into destination docx file.
+
+    // You need next code when you want to call XWPFParagraph.removeRun().
+//    dstPr.createRun();
+
+    if (contentSource.getEmbeddedPictures() != null && contentSource.getEmbeddedPictures().size() > 0) {
+      hasImages = true;
+    }
+
+    if (hasImages) {
+      for (XWPFPicture pic : contentSource.getEmbeddedPictures()) {
+
+//        XWPFPictureData pictureData = pic.getPictureData();
+//
+//        byte[] data = pictureData.getData();
+//
+//        long cx = pic.getCTPicture().getSpPr().getXfrm().getExt().getCx();
+//        long cy = pic.getCTPicture().getSpPr().getXfrm().getExt().getCy();
+//        // This x and y are relative to cx and cy
+//        long x = pic.getCTPicture().getSpPr().getXfrm().getExt().xgetCx().getLongValue();
+//        long y = pic.getCTPicture().getSpPr().getXfrm().getExt().xgetCy().getLongValue();
+//
+        try {
+
+//          // not working. DO NOT USE
+//          dest.addPicture(new ByteArrayInputStream(data), pictureData.getPictureType(), pictureData.getFileName(), Units.pointsToPixel(Units.toPoints(cx)), Units.pointsToPixel(Units.toPoints(cy)));
+
+//          String blipId = clone.getDocument().addPictureData(data, pictureData.getPictureType());
+//          DocxHandler.createPictureCxCy(source, clone, blipId,
+//              clone.getDocument().getNextPicNameNumber(pictureData.getPictureType()), cx, cy);
+
+          clonePicture(contentSource, clone, contentSource.getEmbeddedPictures().indexOf(pic));
+
+//        } catch (IOException e1) {
+//          e1.printStackTrace();
+        } catch (InvalidFormatException e1) {
+          e1.printStackTrace();
+        } catch (IOException e) {
+          e.printStackTrace();
+        }
+      }
+
+      for (XWPFPicture sPic : contentSource.getEmbeddedPictures()) {
+        for (XWPFPicture cPic : clone.getEmbeddedPictures()) {
+          if (cPic.getPictureData().getChecksum().equals(sPic.getPictureData().getChecksum())) {
+            cPic.getCTPicture().set(sPic.getCTPicture());
+          }
+        }
+      }
+    }
+//    else {
+//      int pos = destDoc.getParagraphs().size() - 1;
+//      destDoc.setParagraph(srcPr, pos);
+//    }
+    return clone;
+  }
+
+  // Copy Styles of Table and Paragraph.
+  public static void copyStyle(XWPFDocument sourceDocument, XWPFDocument destinationDocument, XWPFStyle style) {
+    if (destinationDocument == null || style == null)
+      return;
+
+    if (destinationDocument.getStyles() == null) {
+      destinationDocument.createStyles();
+    }
+
+    List<XWPFStyle> usedStyleList = sourceDocument.getStyles().getUsedStyleList(style);
+    for (XWPFStyle xwpfStyle : usedStyleList) {
+      destinationDocument.getStyles().addStyle(xwpfStyle);
+    }
   }
 }
