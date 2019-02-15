@@ -127,6 +127,9 @@ public class DocumentInsertStrategy implements InsertStrategy {
             !variable.isAsUniqueParagraph() && (insert.isInAList() || newParagraph.getNumID() != null)) {
           clearParagraphNum(newParagraph);
           cloneParagraphNum(newParagraph, prevParagraph, nextParagraph);
+          if (firstParagraph != newParagraph && !variable.isAsUniqueParagraph()) {
+            keepIndentOnlyParagraphNum(newParagraph);
+          }
         }
 
         if (newParagraph != firstParagraph || !variable.isAsUniqueParagraph()) {
@@ -152,6 +155,25 @@ public class DocumentInsertStrategy implements InsertStrategy {
     if (dest.getCTP().getPPr().getNumPr().getIlvl() == null)
       dest.getCTP().getPPr().getNumPr().addNewIlvl();
     dest.getCTP().getPPr().getNumPr().getIlvl().setVal(null);
+  }
+
+  private void keepIndentOnlyParagraphNum(XWPFParagraph dest) {
+    dest.setNumID(null);
+    dest.setIndentationHanging(-1);
+//    if (dest.getIndentationLeft() > -1) {
+//      dest.setFirstLineIndent(dest.getFirstLineIndent() + dest.getIndentationHanging());
+//    } else {
+//      dest.setFirstLineIndent(dest.getIndentationHanging());
+//    }
+//    if (dest.getIndentationLeft() > -1) {
+//      dest.setIndentationLeft(dest.getIndentationLeft() + dest.getIndentationHanging());
+//    } else {
+//      dest.setIndentationLeft(dest.getIndentationHanging());
+//    }
+//    dest.setStyle(null);
+//    if (dest.getCTP().getPPr().getNumPr().getIlvl() == null)
+//      dest.getCTP().getPPr().getNumPr().addNewIlvl();
+//    dest.getCTP().getPPr().getNumPr().getIlvl().setVal(null);
   }
 
   private void cloneParagraphNum(XWPFParagraph dest, XWPFParagraph prevSource, XWPFParagraph nextSource) {
