@@ -18,6 +18,7 @@ import org.apache.poi.xwpf.usermodel.XWPFRun;
 import org.apache.poi.xwpf.usermodel.XWPFTable;
 import org.apache.poi.xwpf.usermodel.XWPFTableRow;
 import org.apache.xmlbeans.XmlCursor;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTAbstractNum;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTRow;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTTblPr;
 import pl.jsolve.sweetener.collection.Maps;
@@ -77,15 +78,13 @@ public class DocumentInsertStrategy implements InsertStrategy {
 
     XWPFParagraph firstParagraph = null;
 
-    String documentIdentifier = subDocument.getProperties().getCoreProperties().getIdentifier();
-
     for (IBodyElement bodyElement : bodyElements) {
       BodyElementType bodyElementType = bodyElement.getElementType();
 
       boolean clonedRunOnly = false;
 
       // Copying numbering from src document to match inserted paragraph styles
-//      copyNumbering(documentIdentifier, subDocument, mainDocument);
+      // copyNumbering(subDocument, mainDocument);
 
       if (bodyElementType.equals(BodyElementType.PARAGRAPH)) {
 
@@ -94,15 +93,15 @@ public class DocumentInsertStrategy implements InsertStrategy {
         XWPFParagraph newParagraph;
 
         // Copying styles from src document to match inserted paragraph styles
-        DocxHandler.copyStyle(subDocument, mainDocument, subDocument.getStyles().getStyle(((XWPFParagraph) bodyElement).getStyleID()));
+        // DocxHandler.copyStyle(subDocument, mainDocument, subDocument.getStyles().getStyle(((XWPFParagraph) bodyElement).getStyleID()));
 
         // This will replace the template paragraph or, if necessary, add new one
         if (firstParagraph == null) {
-          newParagraph = templateParagraph;
-          firstParagraph = newParagraph;
           // move cursor to next for the next insertNewParagraph
-          templateCursor = newParagraph.getCTP().newCursor();
-        } else if (variable.isAsUniqueParagraph() && (insert.isInAList() || firstParagraph.getNumID() != null)) {
+          templateCursor = templateParagraph.getCTP().newCursor();
+        }
+
+        if (firstParagraph != null && variable.isAsUniqueParagraph() && (insert.isInAList() || firstParagraph.getNumID() != null)) {
           newParagraph = firstParagraph;
           XWPFRun run = firstParagraph.createRun();
           run.addBreak();
@@ -110,8 +109,15 @@ public class DocumentInsertStrategy implements InsertStrategy {
         } else {
           // move the cursor to next
           templateCursor.toNextSibling();
-          // and add the new paragraph
-          newParagraph = templateParagraph.getBody().insertNewParagraph(templateCursor);
+          if (firstParagraph == null) {
+            // first, set newParagraph as the template paragraph to replace the content without leave
+            // empty spaces
+            newParagraph = templateParagraph;
+            firstParagraph = newParagraph;
+          } else {
+            // else the paragraph is new and we needs to add a new one into main document
+            newParagraph = mainDocument.insertNewParagraph(templateCursor);
+          }
           // move cursor to next for the next insertNewParagraph
           templateCursor = newParagraph.getCTP().newCursor();
         }
@@ -123,12 +129,15 @@ public class DocumentInsertStrategy implements InsertStrategy {
         }
 
         // if is first insertion, copy the numerating properties from paragraph, if any
-        if ((newParagraph == firstParagraph && (insert.isInAList() || newParagraph.getNumID() != null)) ||
-            !variable.isAsUniqueParagraph() && (insert.isInAList() || newParagraph.getNumID() != null)) {
-          clearParagraphNum(newParagraph);
+        if ((newParagraph == firstParagraph && (insert.isInAList() || newParagraph.getNumID() != null || paragraph.getNumID() != null)) ||
+            !variable.isAsUniqueParagraph() && (insert.isInAList() || newParagraph.getNumID() != null || paragraph.getNumID() != null)) {
+//          clearParagraphNum(newParagraph);
           cloneParagraphNum(newParagraph, prevParagraph, nextParagraph);
-          if (firstParagraph != newParagraph && !variable.isAsUniqueParagraph()) {
+          if (firstParagraph != newParagraph && (variable.isAsUniqueParagraph() || paragraph.getNumID() == null)) {
             keepIndentOnlyParagraphNum(newParagraph);
+          } else {
+            setParagraphNum(newParagraph, templateParagraph, templateParagraph);
+            setParagraphListLevel(newParagraph, templateParagraph, templateParagraph);
           }
         }
 
@@ -152,8 +161,7 @@ public class DocumentInsertStrategy implements InsertStrategy {
   private void clearParagraphNum(XWPFParagraph dest) {
     dest.setNumID(null);
     dest.setStyle(null);
-    if (dest.getCTP().getPPr().getNumPr().getIlvl() == null)
-      dest.getCTP().getPPr().getNumPr().addNewIlvl();
+    checkILvl(dest);
     dest.getCTP().getPPr().getNumPr().getIlvl().setVal(null);
   }
 
@@ -191,9 +199,54 @@ public class DocumentInsertStrategy implements InsertStrategy {
     if (source != null) {
       dest.setNumID(source.getNumID());
       dest.setStyle(source.getStyle());
-      if (dest.getCTP().getPPr().getNumPr().getIlvl() == null)
-        dest.getCTP().getPPr().getNumPr().addNewIlvl();
+      checkILvl(dest);
       dest.getCTP().getPPr().getNumPr().getIlvl().setVal(source.getNumIlvl());
+    }
+  }
+
+  private void setParagraphNum(XWPFParagraph dst, XWPFParagraph prevSource, XWPFParagraph nextSource) {
+    XWPFParagraph src = prevSource == null ? nextSource : prevSource;
+
+    if (src == null || src.getNumID() == null) return;
+
+    XWPFDocument doc = src.getDocument();
+    XWPFNumbering numbering = doc.getNumbering() == null ? doc.createNumbering() : doc.getNumbering();
+
+    XWPFNum srcNum = numbering.getNum(src.getNumID());
+    BigInteger srcAbstractNumId = srcNum.getCTNum().getAbstractNumId().getVal();
+    XWPFAbstractNum srcXWPFAbstractNum = numbering.getAbstractNum(srcAbstractNumId);
+    CTAbstractNum srcCTAbstractNum = srcXWPFAbstractNum.getCTAbstractNum();
+
+    XWPFAbstractNum dstAbs = new XWPFAbstractNum(srcCTAbstractNum, numbering);
+    dstAbs.getAbstractNum().setAbstractNumId(srcAbstractNumId);
+
+    BigInteger newAbstractNumId = numbering.addAbstractNum(dstAbs);
+    BigInteger newNumId = numbering.addNum(srcAbstractNumId);
+    BigInteger numId = numbering.getIdOfAbstractNum(srcXWPFAbstractNum);
+    dst.setNumID(newNumId);
+    dst.getCTP().getPPr().getNumPr().getIlvl().setVal(src.getNumIlvl());
+    dst.setIndentationLeft(src.getIndentationLeft());
+  }
+
+  private void setParagraphListLevel(XWPFParagraph dst, XWPFParagraph prevSource, XWPFParagraph nextSource) {
+    XWPFParagraph src = prevSource == null ? nextSource : prevSource;
+
+    if (src == null) return;
+
+    checkILvl(dst);
+    dst.setIndentationLeft(src.getIndentationLeft());
+    dst.getCTP().getPPr().getNumPr().getIlvl().setVal(src.getNumIlvl());
+  }
+
+  private void checkILvl(XWPFParagraph paragraph) {
+    if (paragraph.getCTP().getPPr() == null) {
+      paragraph.getCTP().addNewPPr();
+    }
+    if (paragraph.getCTP().getPPr().getNumPr() == null) {
+      paragraph.getCTP().getPPr().addNewNumPr();
+    }
+    if (paragraph.getCTP().getPPr().getNumPr().getIlvl() == null) {
+      paragraph.getCTP().getPPr().getNumPr().addNewIlvl();
     }
   }
 
@@ -247,7 +300,7 @@ public class DocumentInsertStrategy implements InsertStrategy {
   }
 
   // Copy Numbering of Table and Paragraph.
-  private static void copyNumbering(String prefix, XWPFDocument srcDoc, XWPFDocument destDoc)
+  private static void copyNumbering(XWPFDocument srcDoc, XWPFDocument destDoc)
   {
     if (destDoc == null || srcDoc == null)
       return;
@@ -255,10 +308,6 @@ public class DocumentInsertStrategy implements InsertStrategy {
     if (destDoc.getNumbering() == null) {
       destDoc.createNumbering();
     }
-
-    String sanitizedPrefix = StringUtils.trimToEmpty(prefix);
-
-    sanitizedPrefix = sanitizedPrefix.isEmpty() ? "" : sanitizedPrefix + " ";
 
     Map<BigInteger, XWPFNum> mapNumberings = getNums(srcDoc);
 
